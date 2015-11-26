@@ -2396,8 +2396,26 @@ describe('Voting', () => {
 });
 
 If you run the test now, you should see it pass:
-
+#+BEGIN_SRC sh :results verbatim
 npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Voting
+    ✓ renders a poir of buttons
+
+
+  1 passing (63ms)
+
+#+end_example
+
 
 When one of those voting buttons is clicked, the component should invoke a callback function. Like the
 entry pair, the callback function should also be given to the component as a prop.

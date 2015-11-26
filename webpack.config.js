@@ -3,7 +3,7 @@ module.exports = {
   entry: [
     'webpack-dev-server/client?http://23.227.183.105:8080',
     'webpack/hot/only-dev-server',
-    './src/index.js'
+    './src/index.jsx'
   ],
   module: {
     loaders: [{
