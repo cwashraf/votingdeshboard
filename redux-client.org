@@ -1,0 +1,2767 @@
+#+SEQ_TODO: TODAY TOMORROW TEST DONE
+* TODAY What You Will Need
+#+BEGIN: clocktable :maxlevel 4 :scope subtree
+#+CAPTION: Clock summary at [2015-11-24 মঙ্গল 21:33]
+| Headline                 | Time   |
+|--------------------------+--------|
+| *Total time*             | *0:22* |
+|--------------------------+--------|
+| TODAY What You Will Need | 0:22   |
+#+END:
+
+  CLOCK: [2015-11-24 মঙ্গল 09:52]--[2015-11-24 মঙ্গল 10:02] =>  0:10
+  CLOCK: [2015-11-24 মঙ্গল 09:38]--[2015-11-24 মঙ্গল 09:50] =>  0:12
+  :PROPERTIES:
+  :Effort:   0:13
+  :END:
+** http://teropa.info/blog/2015/09/10/full-stack-redux-tutorial.html
+** Install following packages 
+*** DONE Node
+    CLOSED: [2015-11-24 মঙ্গল 09:37]
+#+BEGIN_SRC sh 
+node -v 
+#+END_SRC
+
+#+RESULTS:
+: v4.2.1
+*** DONE ES6
+*** React
+*** Webpack
+*** and Babel
+** TOMORROW For good introduction we need to take a look at [[http://survivejs.com/][SurviveJS]]
+* The App 
+** We'll be developing an application for organizing live votes 
+*** for parties, conferences, meetings, and other gatherings of people.
+** For example, here's how a vote on the best Danny Boyle film
+could go:
+The app puts entries against each other in pairs, until a winner is found. 
+
+** The app will have two separate user interfaces: The voting UI
+can be used on a mobile device, or anything else that has a
+web browser. The results UI is designed to be beamed on a
+projector or some other large screen. It'll show the results
+of the running vote in real time.
+
+* The Architecture 
+** The system will technically consist of two applications:
+There's a browser app we'll make with React that provides
+both the user interfaces, and a server app we'll make for
+Node that handles the voting logic. Communication between the
+two will be done using WebSockets.
+** We're going to use Redux to organize the application code
+both on the client and on the server. For holding the state
+we'll use Immutable data structures.
+
+** Even though there'll be a lot of similarity between the
+client and server - both will use Redux, for example - this
+isn't really a universal/isomorphic application and the two
+won't actually share any code. 
+
+* The Server Application 
+** Description
+***  We're going to write the Node application first and the React application after that. This will let us concentrate on the core logic before we start thinking about the UI.
+*** As we create the server app, we'll get acquainted with Redux and Immutable, and will see how an application built with them holds together. Redux is most often associated with React applications, but it really isn't limited to that use case. Part of what we're going to learn is how useful Redux can be in other contexts as well!
+** Designing The Application State Tree 
+*** Designing a Redux app often begins by thinking about the application state data structure. This is what describes what's going on in your application at any given time.
+*** All kinds of frameworks and architectures have state. 
+**** In Ember apps and Backbone apps, state is in Models. 
+**** In Angular apps, state is often in Factories and Services. 
+**** In most Flux implementations, it is in Stores. 
+**** How does Redux differ from these
+***** The main difference is that in Redux.
+***** the application state is all stored in one single tree structure. In other words, everything there is to know
+about your application's state is stored in one data structure formed out
+of maps and arrays.
+
+** Project Setup
+*** DONE This results in a directory with the single file "package.json" in it.
+#+BEGIN_SRC sh
+npm init -y
+#+END_SRC
+    
+#+RESULTS:
+*** DONE Install ES6, Mocha, Cha 
+#+BEGIN_SRC sh
+npm install --save-dev babel-core babel-cli babel-preset-es2015
+npm install --save-dev mocha chai
+#+END_SRC
+
+#+RESULTS:
+| babel-core@6.1.20          | node_modules/babel-core                                     |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | slash@1.0.0                                                 |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | shebang-regex@1.0.0                                         |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | path-exists@1.0.0                                           |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | path-is-absolute@1.0.0                                      |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-messages@6.1.18                                       |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-template@6.1.18                                       |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | private@0.1.6                                               |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-helpers@6.1.20                                        |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | esutils@2.0.2                                               |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | convert-source-map@1.1.2                                    |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | home-or-tmp@1.0.0                                           | (os-tmpdir@1.0.1,                            | user-home@1.1.1)                              |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | source-map@0.5.3                                            |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | debug@2.2.0                                                 | (ms@0.7.1)                                   |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babylon@6.1.20                                              |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-types@6.1.18                                          | (to-fast-properties@1.0.1)                   |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | minimatch@2.0.10                                            | (brace-expansion@1.1.1)                      |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-code-frame@6.1.18                                     | (js-tokens@1.0.2,                            | line-numbers@0.2.0,                           | chalk@1.1.1,                        | repeating@1.1.3)                   |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-generator@6.1.20                                      | (trim-right@1.0.1,                           | repeating@1.1.3,                              | is-integer@1.0.6,                   | detect-indent@3.0.1)               |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-traverse@6.1.20                                       | (globals@8.12.0,                             | repeating@1.1.3,                              | invariant@2.1.2)                    |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | source-map-support@0.2.10                                   | (source-map@0.1.32)                          |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | json5@0.4.0                                                 |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | regenerator@0.8.35                                          | (through@2.3.8,                              | esprima-fb@15001.1.0-dev-harmony-fb,          | recast@0.10.24,                     | commoner@0.10.4,                   | defs@1.1.1)            |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | lodash@3.10.1                                               |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-register@6.1.18                                       | (core-js@1.2.6)                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| └──                        | babel-runtime@5.8.34                                        | (core-js@1.2.6)                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+|                            |                                                             |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| babel-cli@6.1.18           | node_modules/babel-cli                                      |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | slash@1.0.0                                                 |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | path-exists@1.0.0                                           |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | fs-readdir-recursive@0.1.2                                  |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | path-is-absolute@1.0.0                                      |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | log-symbols@1.0.2                                           |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | convert-source-map@1.1.2                                    |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | v8flags@2.0.10                                              | (user-home@1.1.1)                            |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | commander@2.9.0                                             | (graceful-readlink@1.0.1)                    |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | source-map@0.5.3                                            |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | chalk@1.1.1                                                 | (escape-string-regexp@1.0.3,                 | supports-color@2.0.0,                         | ansi-styles@2.1.0,                  | has-ansi@2.0.0,                    | strip-ansi@3.0.0)      |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | glob@5.0.15                                                 | (inherits@2.0.1,                             | once@1.3.2,                                   | inflight@1.0.4,                     | minimatch@3.0.0)                   |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | output-file-sync@1.1.1                                      | (xtend@4.0.1,                                | mkdirp@0.5.1)                                 |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | request@2.65.0                                              | (aws-sign2@0.6.0,                            | forever-agent@0.6.1,                          | tunnel-agent@0.4.1,                 | oauth-sign@0.8.0,                  | caseless@0.11.0,       | stringstream@0.0.5,             | isstream@0.1.2,        | json-stringify-safe@5.0.1, | extend@3.0.0,         | tough-cookie@2.2.1, | qs@5.2.0, | node-uuid@1.4.6, | combined-stream@1.0.5, | mime-types@2.1.7, | form-data@1.0.0-rc3, | http-signature@0.11.0, | hawk@3.1.1, | bl@1.0.0, | har-validator@2.0.2) |
+| ├──                        | chokidar@1.2.0                                              | (arrify@1.0.0,                               | glob-parent@2.0.0,                            | async-each@0.1.6,                   | is-glob@2.0.1,                     | is-binary-path@1.0.1,  | lodash.flatten@3.0.2,           | readdirp@2.0.0,        | anymatch@1.3.0)            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | bin-version-check@2.1.0                                     | (semver-truncate@1.0.0,                      | minimist@1.2.0,                               | semver@4.3.6,                       | bin-version@1.0.4)                 |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | lodash@3.10.1                                               |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-register@6.1.18                                       | (home-or-tmp@1.0.0,                          | source-map-support@0.2.10,                    | core-js@1.2.6)                      |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-polyfill@6.1.19                                       | (regenerator@0.8.42,                         | core-js@1.2.6)                                |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| └──                        | babel-runtime@5.8.34                                        | (core-js@1.2.6)                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+|                            |                                                             |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| babel-preset-es2015@6.1.18 | node_modules/babel-preset-es2015                            |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-shorthand-properties@6.1.18   | (babel-types@6.1.18,                         | babel-runtime@5.8.34)                         |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-arrow-functions@6.1.18        | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-template-literals@6.1.18      | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-literals@6.1.18               | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-block-scoped-functions@6.1.18 | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-typeof-symbol@6.1.18          | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-spread@6.1.18                 | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-destructuring@6.1.18          | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-check-es2015-constants@6.1.18                  | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-for-of@6.1.18                 | (babel-runtime@5.8.34)                       |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-block-scoping@6.1.18          | (babel-types@6.1.18,                         | babel-template@6.1.18,                        | babel-traverse@6.1.20,              | lodash@3.10.1,                     | babel-runtime@5.8.34)  |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-function-name@6.1.18          | (babel-types@6.1.18,                         | babel-helper-function-name@6.1.18,            | babel-runtime@5.8.34)               |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-object-super@6.1.18           | (babel-helper-replace-supers@6.1.18,         | babel-runtime@5.8.34)                         |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-computed-properties@6.1.18    | (babel-template@6.1.18,                      | babel-helper-define-map@6.1.18,               | babel-runtime@5.8.34)               |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-sticky-regex@6.1.18           | (babel-helper-regex@6.1.18,                  | babel-types@6.1.18,                           | babel-runtime@5.8.34)               |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-unicode-regex@6.1.18          | (regexpu@1.3.0,                              | babel-helper-regex@6.1.18,                    | babel-runtime@5.8.34)               |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-parameters@6.1.18             | (babel-helper-get-function-arity@6.1.18,     | babel-helper-call-delegate@6.1.18,            | babel-template@6.1.18,              | babel-types@6.1.18,                | babel-traverse@6.1.20, | babel-runtime@5.8.34)           |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-modules-commonjs@6.1.20       | (babel-plugin-transform-strict-mode@6.1.18,  | babel-template@6.1.18,                        | babel-types@6.1.18,                 | babel-runtime@5.8.34)              |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | babel-plugin-transform-es2015-classes@6.1.20                | (babel-messages@6.1.18,                      | babel-helper-optimise-call-expression@6.1.18, | babel-helper-replace-supers@6.1.18, | babel-helper-function-name@6.1.18, | babel-template@6.1.18, | babel-helper-define-map@6.1.18, | babel-types@6.1.18,    | babel-traverse@6.1.20,     | babel-runtime@5.8.34) |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| └──                        | babel-plugin-transform-regenerator@6.1.18                   | (babel-plugin-syntax-async-functions@6.1.18, | private@0.1.6,                                | through@2.3.8,                      | babylon@6.1.20,                    | commoner@0.10.4,       | babel-types@6.1.18,             | babel-traverse@6.1.20, | babel-runtime@5.8.34)      |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| chai@3.4.1                 | node_modules/chai                                           |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | assertion-error@1.0.1                                       |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | type-detect@1.0.0                                           |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| └──                        | deep-eql@0.1.3                                              | (type-detect@0.1.1)                          |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+|                            |                                                             |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| mocha@2.3.3                | node_modules/mocha                                          |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | escape-string-regexp@1.0.2                                  |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | commander@2.3.0                                             |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | diff@1.4.0                                                  |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | supports-color@1.2.0                                        |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | growl@1.8.1                                                 |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | debug@2.0.0                                                 | (ms@0.6.2)                                   |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | mkdirp@0.5.0                                                | (minimist@0.0.8)                             |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| ├──                        | glob@3.2.3                                                  | (inherits@2.0.1,                             | graceful-fs@2.0.3,                            | minimatch@0.2.14)                   |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+| └──                        | jade@0.26.3                                                 | (commander@0.6.1,                            | mkdirp@0.3.0)                                 |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+|                            |                                                             |                                              |                                               |                                     |                                    |                        |                                 |                        |                            |                       |                     |           |                  |                        |                   |                      |                        |             |           |                      |
+*** DONE tests with mocha command 
+#+BEGIN_SRC sh
+mkdir test
+./node_modules/mocha/bin/mocha --compilers js:babel-core/register --recursive
+#+END_SRC
+
+#+RESULTS:
+|                 |
+|                 |
+| 0 passing (3ms) |
+*** DONE Place the command in package.json
+package.json
+"scripts": {
+  "test": "mocha --compilers js:babel-core/register --recursive"
+},
+*** DONE Another thing we need to do is enable Babel's ES6/ES2015 language support. It's
+done by activating the babel-preset-es2015 package that we already installed.
+We just need to add a "babel" section to package.json:
+
+package.json
+"babel": {
+  "presets": ["es2015"]
+}
+*** DONE test npm 
+#+BEGIN_SRC sh
+npm run test
+#+END_SRC
+
+#+RESULTS:
+|   |                     |             |                                          |             |
+| > | voting-server@1.0.0 | test        | /usr/local/src/jstutorials/voting-server |             |
+| > | mocha               | --compilers | js:babel-core/register                   | --recursive |
+|   |                     |             |                                          |             |
+|   |                     |             |                                          |             |
+|   |                     |             |                                          |             |
+| 0 | passing             | (3ms)       |                                          |             |
+|   |                     |             |                                          |             |
+
+*** DONE Add immutability 
+One of the first libraries we're going to be using is Facebook's Immutable,
+which provides a number of data structures for us to use. We're going to start
+discussing Immutable in the next section, but for now let's just add it to the
+project, along with the chai-immutable library that extends Chai to add support
+for comparing Immutable data structures:
+
+#+BEGIN_SRC sh
+npm install --save immutable
+npm install --save-dev chai-immutable
+
+#+END_SRC
+
+#+RESULTS:
+| immutable@3.7.5      | node_modules/immutable      |
+| chai-immutable@1.5.2 | node_modules/chai-immutable |
+*** We need to let plug in chai-immutable before any tests are run.
+**** DONE Add test/test_helper.js
+#+BEGIN_SRC js :tangle test/test_helper.js
+import chai from 'chai';
+import chaiImmutable from 'chai-immutable';
+
+chai.use(chaiImmutable);
+
+#+END_SRC
+**** Modify package.json
+"scripts": {
+  "test": "mocha --compilers js:babel-core/register --require ./test/test_helper.js  --recursive",
+  "test:watch": "npm run test -- --watch"
+},
+
+** Getting Comfortable With Immutable				  :IMMUTABLE:
+   CLOCK: [2015-11-24 মঙ্গল 11:17]--[2015-11-24 মঙ্গল 12:44] =>  1:27
+#+BEGIN: clocktable :maxlevel 3 :scope subtree
+#+CAPTION: Clock summary at [2015-11-24 মঙ্গল 21:34]
+| Headline                                        | Time   |      |      |
+|-------------------------------------------------+--------+------+------|
+| *Total time*                                    | *2:27* |      |      |
+|-------------------------------------------------+--------+------+------|
+| \emsp Getting Comfortable With Immutable        |        | 2:27 |      |
+| \emsp\emsp Immutable data structures are the... |        |      | 1:00 |
+#+END:
+
+   :PROPERTIES:
+   :Effort:   1:40
+   :END:
+The second important point about the Redux architecture is that the state is
+not just a tree, but it is in fact an immutable tree.
+*** The state is not just a tree, but it is in fact an immutable tree.
+Looking at the trees in the previous section, it might at first seem like a
+reasonable idea to have code that changes the state of the application by just
+making updates in the tree: Replacing things in maps, removing things from
+arrays, etc. However, this is not how things are done in Redux.
+*** the next state is another state tree that reflects the current changes
+A Redux application's state tree is an immutable data structure. That means
+that once you have a state tree, it will never change as long as it exists. It
+will keep holding the same state forever. How you then go to the next state is
+by producing another state tree that reflects the changes you wanted to make.
+*** Two successive states of the application are stored in two separate and independent trees. 
+This means any two successive states of the application are stored in two
+separate and independent trees. How you get from one to the next is by applying
+a function that takes the current state and returns a new state.
+*** How you get from one to the next is by applying a function that takes the current state and returns a new state.
+*** Immutability Helpful for debuging
+**** Can hold on to the history of your application
+**** You can then do things like undo/redo for "free"
+**** serialize the history
+just setthe current application state to the previous or next tree in the history. 
+You can also serialize the history and save it for later, or send it to some
+storage so that you can replay it later, which can be hugely helpful when
+debugging.
+*** Data in, data out , pure function
+However, I'd say that even beyond these extra features, the most important
+thing about immutable data is how it simplifies your code. You get to program
+with pure functions: 
+**** pure functions: 
+Functions that take data and return data and do nothing
+else. These are functions that you can trust to behave predictably. You can
+call them as many times as you like and their behavior won't change. Give them
+the same arguments, and they'll return the same results. They're not going to
+change the state of the world. Testing becomes trivial, as you don't need to
+set up stubs or other fakes to "prepare the universe" before you call
+something. It's just data in, data out.
+*** Immutable data structures are the material we'll build our application's state
+   CLOCK: [2015-11-24 মঙ্গল 12:35]--[2015-11-24 মঙ্গল 13:35] =>  1:00
+Immutable data structures are the material we'll build our application's state
+from, so let's spend some time getting comfortable with it by writing some unit
+tests that illustrate how it all works.
+*** Unit Testing Immutable Counter 
+If you're already comfortable with immutable data and the Immutable library,
+feel free to skip to the next section. 
+**** To get acquainted with the idea of immutability
+it may be helpful to first talk about the simplest possible data structure: What if you had a "counter"
+application whose state was nothing but a single number? The state would go
+from 0 to 1 to 2 to 3, etc.
+**** We are already used to thinking of numbers as immutable data. 
+     When the counter increments, we don't mutate a number. It would in fact be 
+     impossible as there are no "setters" on numbers. You can't say 42.setValue(43).
+**** What happens instead is we get another number
+     Which is the result of adding 1 to the previous number. 
+     That we can do with a pure function. Its argument is the current state and 
+     its return value will be used as the next state. When it is called, 
+     it does not change the current state. Here is such a function and a
+     unit test for it:
+
+#+BEGIN_SRC js :tangle test/immutable_spec.js
+  import {expect} from 'chai'
+  describe('a number', () => {
+    function increment(currentState) {
+      return currentState + 1;
+    }
+    it('is immutable', () => {
+      let state = 42;
+      let nextState = increment(state);
+      expect(nextState).to.equal(43);
+      expect(state).to.equal(42);
+    });
+  });
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim drawer
+npm run test
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+
+> voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive
+
+
+
+  immutability
+    a number
+      ✓ is immutable
+
+
+  1 passing (55ms)
+
+:END:
+
+**** The fact that state doesn't change when increment is called should be obvious.
+     How could it? Numbers are immutable!
+**** You may have noticed that this test really has nothing to do with our
+     application - we don't even have any application code yet! 
+**** The test is just a learning tool for us. 
+     I often find it useful to explore a new API or technique by writing unit tests 
+     that exercise the relevant ideas, which is what we're doing here. Kent Beck calls 
+     these kinds of tests "Learning Tests" in his original TDD book. 
+     
+     What we're going to do next is extend this same idea of immutability to all
+     kinds of data structures, not just numbers.
+
+**** Immutable's Lists 
+     we can, for example, have an application whose state is
+     a list of movies. An operation that adds a movie produces a new list that is
+     the old list and the new movie combined. Crucially, the old state remains
+     unchanged after the operation:
+Head:     dad130b master immutable list tested
+#+BEGIN_SRC js :tangle test/immutable_spec.js
+imporot {expect} from 'chai';
+import {List} from 'immutable';
+
+describe('immutability', () => {
+  describe('a number', () => {
+    function increment(currentState) {
+      return currentState + 1;
+    }
+    it('is immutable', () => {
+      let state = 42;
+      let nextState = increment(state);
+      expect(nextState).to.equal(43);
+      expect(state).to.equal(42);
+    });
+  });
+
+  describe('A List', () => {
+    function addMovie(currentState, movie){
+      return currentState.push(movie);
+    }
+
+    it('is immutable', () => {
+      let state = List.of('Trainspotting', '28 Days Later');
+      let nextState = addMovie(state, 'Sunshine');
+
+      expect(nextState).to.equal(List.of(
+	'Trainspotting',
+	'28 Days Later',
+	'Sunshine'
+      ));
+      expect(state).to.equal(List.of(
+	'Trainspotting',
+	'28 Days Later'
+      ));
+
+    });
+  });
+});
+#+END_SRC
+
+#+BEGIN_SRC sh
+npm run test
+#+END_SRC
+
+#+RESULTS:
+ > voting-server@1.0.0  test  /usr/local/src/jstutorials/voting-server
+ > mocha --compilers  js:babel-core/register --require ./test/test_helper.js --recursive 
+
+|--------------+---------+--------+-----------|
+| immutability |         |        |           |
+| a            | number  |        |           |
+|              | ✓       | is     | immutable |
+| A            | List    |        |           |
+|              | ✓       | is     | immutable |
+|              |         |        |           |
+|              |         |        |           |
+| 2            | passing | (28ms) |           |
+|              |         |        |           |
+
+The old state would not have remained unchanged if we'd pushed into a regular
+array! Since we're using an Immutable List instead, we have the same semantics
+as we had with the number example.
+
+The idea extends to full state trees as well. A state tree is just a nested
+data structure of Lists, Maps, and possibly other kinds of collections.
+Applying an operation to it involves producing a new state tree, leaving the
+previous one untouched. If the state tree is a Map with a key 'movies' that
+contains a List of movies, 
+**** adding a movie means we need to create a new Map where the movies key points to a new List
+#+BEGIN_SRC js :tangle test/immutable_spec.js
+imporot {expect} from 'chai';
+import {List, Map} from 'immutable';
+
+describe('immutability', () => {
+  describe('a number', () => {
+    function increment(currentState) {
+      return currentState + 1;
+    }
+    it('is immutable', () => {
+      let state = 42;
+      let nextState = increment(state);
+      expect(nextState).to.equal(43);
+      expect(state).to.equal(42);
+    });
+  });
+
+  describe('A List', () => {
+    function addMovie(currentState, movie){
+      return currentState.push(movie);
+    }
+
+    it('is immutable', () => {
+      let state = List.of('Trainspotting', '28 Days Later');
+      let nextState = addMovie(state, 'Sunshine');
+
+      expect(nextState).to.equal(List.of(
+	'Trainspotting',
+	'28 Days Later',
+	'Sunshine'
+      ));
+      expect(state).to.equal(List.of(
+	'Trainspotting',
+	'28 Days Later'
+      ));
+
+    });
+  });
+
+  describe('a tree' , () => {
+    function addMovie(currentState, movie ) {
+      return currentState.set(
+	'movies',
+	currentState.get('movies').push(movie)
+      );
+    }
+
+    it('is immatable', () => {
+      let state = Map({
+	movies: List.of('Trainspotting', '28 Days Later')
+      });
+      let nextState = addMovie(state, 'Sunshine');
+
+      expect(nextState).to.equal(Map({
+	movies: List.of(
+	  'Trainspotting',
+	  '28 Days Later',
+	  'Sunshine'
+	)
+      }));
+    });
+  });
+});
+#+END_SRC
+
+#+BEGIN_SRC sh
+npm run test
+#+END_SRC
+Head:     19afc7b master new Map where the movies key points to a new List
+
+#+RESULTS:
+ > voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+ > mocha --compilers  js:babel-core/register  --require ./test/test_helper.js --recursive 
+
+| immutability |         |        |           |  
+| a	       | number	 |	  |	      |	 
+|	       | ✓	 | is	  | immutable |	 
+| A	       | List	 |	  |	      |	 
+|	       | ✓	 | is	  | immutable |	 
+| a	       | tree	 |	  |	      |	 
+|	       | ✓	 | is	  | immatable |	 
+|	       |	 |	  |	      |	 
+|	       |	 |	  |	      |	 
+| 3	       | passing | (30ms) |	      |	 
+|	       |	 |	  |	      |	 
+
+This is exactly the same behavior as before, just extended to show that it
+works with nested data structures too. The same idea holds to all shapes and
+sizes of data.
+
+For operations on nested data structures such as this one, Immutable provides
+several helper functions that make it easier to "reach into" the nested data to
+produce an updated value. We can use one called update in this case to make the
+code more concise:
+#+BEGIN_SRC patch :tangle test/immutable_spec.js
+-    function addMovie(currentState, movie ) {
+-      return currentState.set(
+-	'movies',
+-	currentState.get('movies').push(movie)
+-      );
++    function addMovie(currentState, movie) {
++      return currentState.update('movies', movies => movies.push(movie));
+#+END_SRC
+
+#+BEGIN_SRC sh
+npm run test
+#+END_SRC
+Head:     b23ffbc master helper functions that make it easier to reach into
+#+RESULTS:
+| >  voting-server@1.0.0  test  /usr/local/src/jstutorials/voting-server     
+| >  mocha  --compilers  js:babel-core/register  --require  ./test/test_helper.js  --recursive  
+
+| immutability |         |        |           |
+| a            | number  |        |           |
+|              | ✓       | is     | immutable |
+| A            | List    |        |           |
+|              | ✓       | is     | immutable |
+| a            | tree    |        |           |
+|              | ✓       | is     | immatable |
+|              |         |        |           |
+|              |         |        |           |
+| 3            | passing | (33ms) |           |
+|              |         |        |           |
+**** Reasons for using IMMUTABLE library
+***** Immutable's data structures are designed from the ground up to be used
+      immutably and thus provide an API that makes immutable operations convenient. 
+***** I'm partial to Rich Hickey's view that there is no such as thing as
+      immutability by convention. If you use data structures that allow mutations,
+      sooner or later you or someone else is bound to make a mistake and mutate
+      them. This is especially true when you're just getting started. Things like
+      Object.freeze() may help with this. 
+***** Immutable's data structures are persistent, meaning that they are internally
+      structured so that producing new versions is efficient both in terms of time
+      and memory, even for large state trees. Using plain objects and arrays may
+      result in excessive amounts of copying, which hurts performance. 
+
+** Writing The Application Logic With Pure Functions 
+#+BEGIN: clocktable :maxlevel 4 :scope subtree
+#+CAPTION: Clock summary at [2015-11-24 মঙ্গল 21:36]
+| Headline                                              | Time   |      |      |      |
+|-------------------------------------------------------+--------+------+------+------|
+| *Total time*                                          | *5:09* |      |      |      |
+|-------------------------------------------------------+--------+------+------+------|
+| \emsp Writing The Application Logic With...           |        | 5:09 |      |      |
+| \emsp\emsp Loading Entries                            |        |      | 1:03 |      |
+| \emsp\emsp\emsp Test Case for Entries and Source Code |        |      |      | 1:03 |
+| \emsp\emsp Starting The Vote Second state             |        |      | 0:30 |      |
+| \emsp\emsp Voting                                     |        |      | 1:12 |      |
+| \emsp\emsp Moving to The Next Pair                    |        |      | 0:50 |      |
+| \emsp\emsp Ending The Vote                            |        |      | 0:33 |      |
+#+END:
+
+   CLOCK: [2015-11-24 মঙ্গল 10:02]--[2015-11-24 মঙ্গল 11:03] =>  1:01
+   :PROPERTIES:
+   :Effort:   0:54
+   :ORDERED:  t
+   :END:
+Armed with an understanding of immutable state trees and the functions that
+operate on them, we can turn our attention to the logic of our voting
+application itself. The core of the app will be formed from the pieces that we
+have been discussing: A tree structure and a set of functions that produce new
+versions of that tree structure.
+
+*** Loading Entries
+**** Test Case for Entries and Source Code
+     the application allows "loading in" a collection of entries that will be voted on. 
+     We could have a function called setEntries that takes a previous state and 
+     a collection of entries and produces a state where the entries are included. 
+#+BEGIN_SRC js :tangle test/core_spec.js
+import {List, Map} from 'immutable';
+import {expect} from 'chai';
+import {setEntries} from '../src/core';
+
+describe('application logic', () => {
+  describe('setEntries', () => {
+    it('adds the entries to the state', ()=> {
+      const state = Map();
+      const entries = List.of('Trainspotting', '28 Days Later');
+      const nextState = setEntries(state, entries);
+      expect(nextState).to.equal(Map({
+        entries: List.of('Trainspotting', '28 Days Later')
+      }));
+    });
+  });
+});
+
+#+END_SRC
+
+#+BEGIN_SRC js :tangle src/core.js
+export function setEntries(state,entries){
+  return state.set('entries', entries);
+}
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim 
+npm run test 
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive
+
+
+
+  application logic
+    setEntries
+      ✓ adds the entries to the state
+
+  immutability
+    a number
+      ✓ is immutable
+    A List
+      ✓ is immutable
+    a tree
+      ✓ is immatable
+
+
+  4 passing (105ms)
+
+#+end_example
+***** Array to Immutable List
+      CLOCK: [2015-11-24 মঙ্গল 15:17]--[2015-11-24 মঙ্গল 16:20] =>  1:03
+
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC 
+
+#+RESULTS:
+#+begin_example
+
+> voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive
+
+
+
+  application logic
+    setEntries
+      ✓ adds the entries to the state
+
+  immutability
+    a number
+      ✓ is immutable
+    A List
+      ✓ is immutable
+    a tree
+      ✓ is immatable
+
+
+  4 passing (36ms)
+
+#+end_example
+
+#+BEGIN_SRC patch :tangle src/core.js
+@@ -1,4 +1,4 @@
+-
++import {List} from 'immutable';
+ export function setEntries(state,entries){
+-  return state.set('entries', entries);
++  return state.set('entries', List(entries));
+ }
+#+END_SRC
+
+#+BEGIN_SRC test/core_spec.js
+@@ -6,9 +6,9 @@ import {setEntries} from '../src/core';
+ describe('application logic', () => {
+   describe('setEntries', () => {
+     it('adds the entries to the state', ()=> {
+       const state = Map();
+-      const entries = List.of('Trainspotting', '28 Days Later');
++      const entries = ['Trainspotting', '28 Days Later'];
+       const nextState = setEntries(state, entries);
+       expect(nextState).to.equal(Map({
+         entries: List.of('Trainspotting', '28 Days Later')
+       }));
+#+END_SRC
+
+*** Starting The Vote Second state
+    CLOCK: [2015-11-24 মঙ্গল 16:12]--[2015-11-24 মঙ্গল 16:42] =>  0:30
+    
+    We can begin the voting by calling a function called next on a state that
+already has entries set. That means, going from the first to the second of the
+state trees we designed.
+
+The function takes no additional arguments. It should create a vote Map on the
+state, where the two first entries are included under the key pair. The entries
+under vote should no longer be in the entries List:
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive
+
+
+
+  application logic
+    setEntries
+      ✓ adds the entries to the state
+    next
+      ✓ takes the next two entries under vote
+
+  immutability
+    a number
+      ✓ is immutable
+    A List
+      ✓ is immutable
+    a tree
+      ✓ is immatable
+
+
+  5 passing (28ms)
+
+#+end_example
+**** Head:     9e91d63 master prepare 2 canditate for voting.
+#+BEGIN_SRC 
+modified   src/core.js
+@@ -1,4 +1,12 @@
+-import {List} from 'immutable';
++import {List, Map} from 'immutable';
+ export function setEntries(state,entries){
+   return state.set('entries', List(entries));
+ }
++
++export function next(state){
++  const entries = state.get('entries');
++  return state.merge({
++    vote: Map({pair: entries.take(2)}),
++    entries: entries.skip(2)
++  });
++}
+modified   test/core_spec.js
+@@ -1,7 +1,7 @@
+ 
+ import {List, Map} from 'immutable';
+ import {expect} from 'chai';
+-import {setEntries} from '../src/core';
++import {setEntries, next} from '../src/core';
+ 
+ describe('application logic', () => {
+   describe('setEntries', () => {
+@@ -14,4 +14,18 @@ describe('application logic', () => {
+       }));
+     });
+   });
++  describe('next',() => {
++    it('takes the next two entries under vote', () => {
++      const state = Map({
++	entries: List.of('Trainspotting', '28 Days Later', 'Sunshine')
++      });
++      const nextState = next(state);
++      expect(nextState).to.equal(Map({
++	vote: Map({
++	  pair: List.of('Trainspotting', '28 Days Later')
++	}),
++	entries: List.of('Sunshine')
++      }));
++    });
++  });
+ });
+#+END_SRC
+*** Voting
+    CLOCK: [2015-11-24 মঙ্গল 18:15]--[2015-11-24 মঙ্গল 19:27] =>  1:12
+    :PROPERTIES:
+    :Effort:   1:00
+    :END:
+
+    When a vote is ongoing, it should be possible for people to vote on entries.
+    When a new vote is cast for an entry, a "tally" for it should appear in the
+    vote. If there already is a tally for the entry, it should be incremented:
+    
+    tag: 40d673bc12d521250ff4418e09105ac270f92c4d
+    Parent:     d17fe11 diff code insertion
+    
+    #+BEGIN_SRC 
+modified   src/core.js
+@@ -10,3 +10,11 @@ export function next(state){
+     entries: entries.skip(2)
+   });
+ }
++
++export function vote(state, entry){
++  return state.updateIn(
++    ['vote', 'tally', entry ],
++    0,
++    tally => tally + 1
++  );
++}
+modified   test/core_spec.js
+@@ -1,7 +1,7 @@
+ 
+ import {List, Map} from 'immutable';
+ import {expect} from 'chai';
+-import {setEntries, next} from '../src/core';
++import {setEntries, next, vote} from '../src/core';
+ 
+ describe('application logic', () => {
+   describe('setEntries', () => {
+@@ -28,4 +28,47 @@ describe('application logic', () => {
+       }));
+     });
+   });
++  describe('vote', () => {
++    it('creates a tally for the voted entry', () => {
++      const state = Map({
++	vote: Map({
++	  pair: List.of('Trainspotting', '28 Days Later')
++	}),
++	entries: List()
++      });
++      const nextState = vote(state, 'Trainspotting' );
++      expect(nextState).to.equal(Map({
++	vote: Map({
++	  pair: List.of('Trainspotting', '28 Days Later'),
++	  tally: Map({
++	    'Trainspotting': 1
++	  })
++	}),
++	entries: List()
++      }));
++    });
++    it('adds to existing tally for the voted entry', () => {
++      const state = Map({
++	vote: Map({
++	  pair: List.of('Trainspotting', '28 Days Later'),
++	  tally: Map({
++	    'Trainspotting': 3,
++	    '28 Days Later': 2
++	  }),
++	}),
++	entries: List()
++      });
++      const nextState = vote(state, 'Trainspotting');
++      expect(nextState).to.equal(Map({
++	vote: Map({
++	  pair: List.of('Trainspotting', '28 Days Later'),
++	  tally: Map({
++	    'Trainspotting': 4,
++	    '28 Days Later': 2
++	  }),
++	}),
++	entries: List()
++      }));
++    });
++  });
+ });
+#+END_SRC
+
+    #+BEGIN_SRC sh :results verbatim
+    npm run test 
+    #+END_SRC
+
+    #+RESULTS:
+    #+begin_example
+
+ > voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+ > mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive
+
+
+
+   application logic
+     setEntries
+       ✓ adds the entries to the state
+     next
+       ✓ takes the next two entries under vote
+     vote
+       ✓ creates a tally for the voted entry
+       ✓ adds to existing tally for the voted entry
+
+   immutability
+     a number
+       ✓ is immutable
+     A List
+       ✓ is immutable
+     a tree
+       ✓ is immatable
+
+
+   7 passing (29ms)
+
+#+end_example
+    Using updateIn makes this pleasingly succinct. What the code expresses is
+    "reach into the nested data structure path ['vote', 'tally', 'Trainspotting'],
+    and apply this function there. If there are keys missing along the path, create
+    new Maps in their place. If the value at the end is missing, initialize it with
+    0".
+
+    It packs a lot of punch, but this is exactly the kind of code that makes
+    working with immutable data structures pleasant, so it's worth spending a bit
+    of time getting comfortable with it.
+    
+    You could build all these nested Maps and Lists more concisely using the fromJS
+    function from Immutable. 
+
+*** Moving to The Next Pair 
+    CLOCK: [2015-11-24 মঙ্গল 19:32]--[2015-11-24 মঙ্গল 20:22] =>  0:50
+    :PROPERTIES:
+    :Effort:   0:39
+    :END:
+    Once the vote for a given pair is over, we should proceed to the next one. The
+    winning entry from the current vote should be kept, and added back to the end
+    of the entries, so that it will later be paired with something else. The losing
+    entry is thrown away. If there is a tie, both entries are kept.
+    Head:     c5b0f2d master send winner[s] back to entries
+    tag: c5b0f2dff360b81b73e5d422b211f0d8bae60c13
+    #+BEGIN_SRC 
+ @@ -3,8 +3,19 @@ export function setEntries(state,entries){
+   return state.set('entries', List(entries));
+ }
+ 
++function getWinners(vote) {
++  if (!vote) return [];
++  const [a,b] = vote.get('pair');
++  const aVotes = vote.getIn(['tally', a ] , 0);
++  const bVotes = vote.getIn(['tally', b ] , 0);
++  if ( aVotes > bVotes )    return [a];
++  if ( aVotes < bVotes )    return [b];
++  return [a, b];
++}
++
+ export function next(state){
+-  const entries = state.get('entries');
++  const entries = state.get('entries')
++                       .concat(getWinners(state.get('vote')));
+   return state.merge({
+     vote: Map({pair: entries.take(2)}),
+     entries: entries.skip(2)
+modified   test/core_spec.js
+@@ -27,7 +27,47 @@ describe('application logic', () => {
+ 	entries: List.of('Sunshine')
+       }));
+     });
++    it('puts winner of current vote back to entries', () => {
++      const state = Map({
++	vote: Map({
++	  pair: List.of('Trainspotting', '28 Days Later'),
++          tally: Map({
++            'Trainspotting': 4,
++            '28 Days Later': 2
++          })
++	}),
++	entries: List.of('Sunshine', 'Millions', '127 Hours')
++      });
++      const nextState = next(state);
++      expect(nextState).to.equal(Map({
++	vote: Map({
++          pair: List.of('Sunshine', 'Millions')
++	}),
++	entries: List.of('127 Hours', 'Trainspotting')
++      }));
++    });
++
++    it('puts both from tied vote back to entries', () => {
++      const state = Map({
++	vote: Map({
++          pair: List.of('Trainspotting', '28 Days Later'),
++          tally: Map({
++            'Trainspotting': 3,
++            '28 Days Later': 3
++          })
++	}),
++	entries: List.of('Sunshine', 'Millions', '127 Hours')
++      });
++      const nextState = next(state);
++      expect(nextState).to.equal(Map({
++	vote: Map({
++          pair: List.of('Sunshine', 'Millions')
++	}),
++	entries: List.of('127 Hours', 'Trainspotting', '28 Days Later')
++      }));
++    });
+   });
++  
+   describe('vote', () => {
+     it('creates a tally for the voted entry', () => {
+       const state = Map({
+
+    #+END_SRC
+    
+    #+BEGIN_SRC sh :results verbatim
+    npm run test
+    #+END_SRC
+
+    #+RESULTS:
+    #+begin_example
+
+    > voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+    > mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive
+
+
+
+      application logic
+	setEntries
+          ✓ adds the entries to the state
+	next
+          ✓ takes the next two entries under vote
+          ✓ puts winner of current vote back to entries
+          ✓ puts both from tied vote back to entries
+	vote
+          ✓ creates a tally for the voted entry
+          ✓ adds to existing tally for the voted entry
+
+      immutability
+	a number
+          ✓ is immutable
+	A List
+          ✓ is immutable
+	a tree
+          ✓ is immatable
+
+
+      9 passing (35ms)
+
+#+end_example
+
+*** Ending The Vote 
+    CLOCK: [2015-11-24 মঙ্গল 20:15]--[2015-11-24 মঙ্গল 20:48] =>  0:33
+
+    At some point there's just going to be one entry left when a vote ends. At that
+    point we have a winning entry. What we should do is, instead of trying to form
+    a next vote, just set the winner in the state explicitly. The vote is over.
+
+    In the implementation of next we should have a special case for the situation
+    where the entries has a size of 1 after we've processed the current vote:
+Head:     c37c165 master get winner ending...
+tag: c37c165998a38553e195d7b644491c23f683b731
+#+BEGIN_SRC 
+modified   src/core.js
+@@ -15,7 +15,11 @@ function getWinners(vote) {
+ 
+ export function next(state){
+   const entries = state.get('entries')
+-                       .concat(getWinners(state.get('vote')));
++    .concat(getWinners(state.get('vote')));
++  if (entries.size === 1 )
++    return state.remove('vote')
++                .remove('entries')
++                .set('winner', entries.first()); 
+   return state.merge({
+     vote: Map({pair: entries.take(2)}),
+     entries: entries.skip(2)
+modified   test/core_spec.js
+@@ -66,6 +66,22 @@ describe('application logic', () => {
+ 	entries: List.of('127 Hours', 'Trainspotting', '28 Days Later')
+       }));
+     });
++    it('marks winner when just one entry left', () => {
++      const state = Map({
++	vote: Map({
++          pair: List.of('Trainspotting', '28 Days Later'),
++          tally: Map({
++            'Trainspotting': 4,
++            '28 Days Later': 2
++          })
++	}),
++	entries: List()
++      });
++      const nextState = next(state);
++      expect(nextState).to.equal(Map({
++	winner: 'Trainspotting'
++      }));
++    });
+   });
+   
+   describe('vote', () => {
+#+END_SRC
+
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive
+
+
+
+  application logic
+    setEntries
+      ✓ adds the entries to the state
+    next
+      ✓ takes the next two entries under vote
+      ✓ puts winner of current vote back to entries
+      ✓ puts both from tied vote back to entries
+      ✓ marks winner when just one entry left
+    vote
+      ✓ creates a tally for the voted entry
+      ✓ adds to existing tally for the voted entry
+
+  immutability
+    a number
+      ✓ is immutable
+    A List
+      ✓ is immutable
+    a tree
+      ✓ is immatable
+
+
+  10 passing (58ms)
+
+#+end_example
+
+We could have just returned Map({winner: entries.first()}) here. But instead we
+still take the old state as the starting point and explicitly remove 'vote' and
+'entries' keys from it. The reason for this is future-proofing: At some point
+we might have some unrelated data in the state, and it should pass through this
+function unchanged. It is generally a good idea in these state transformation
+functions to always morph the old state into the new one instead of building
+the new state completely from scratch.
+
+Here we have an acceptable version of the core logic of our app, expressed as a
+few functions. We also have unit tests for them, and writing those tests has
+been relatively easy: No setup, no mocks, no stubs. That's the beauty of pure
+functions. We can just call them and inspect the return values.
+
+Note that we haven't even installed Redux yet. We've been able to focus totally
+on the logic of the app itself, without bringing the "framework" in. There's
+something very pleasing about that.
+
+** Introducing Actions and Reducers
+   CLOCK: [2015-11-24 মঙ্গল 20:56]--[2015-11-24 মঙ্গল 21:27] =>  0:31
+   :PROPERTIES:
+   :Effort:   0:30
+   :END:
+ 
+   We have the core functions of our app, but in Redux you don't actually call
+   those functions directly. There is a layer of indirection between the functions
+   and the outside world: Actions.
+
+   An action is a simple data structure that describes a change that should occur
+   in your app state. It's basically a description of a function call packaged
+   into a little object. By convention, every action has a type attribute that
+   describes which operation the action is for. Each action may also carry
+   additional attributes. Here are a few example actions that match the core
+   functions we have just written:
+
+   {type: 'SET_ENTRIES', entries: ['Trainspotting', '28 Days Later']}
+   
+   {type: 'NEXT'}
+
+   {type: 'VOTE', entry: 'Trainspotting'}
+
+   If actions are expressed like this, we also need a way to turn them into the
+   actual core function calls. For example, given the VOTE action, the following
+   call should be made:
+
+   // This action
+   let voteAction = {type: 'VOTE', entry: 'Trainspotting'}
+   // should cause this to happen
+   return vote(state, voteAction.entry);
+
+   What we're going to write is a generic function that takes any kind of action -
+   along with the current state - and invokes the core function that matches the
+   action. This function is called a reducer:
+#+BEGIN_SRC js 
+export default function reducer(state, action) {
+// Figure out which function to call and call it
+}
+#+END_SRC
+
+We should test that the reducer can indeed handle each of our three actions:
+
+#+BEGIN_SRC js 
+import {Map, fromJS} from 'immutable'
+import {expect} from 'chai';
+import reducer from '../src/reducer';
+
+  it('handles SET_ENTRIES', () => {
+    const initialState = Map();
+    const action = { type: 'SET_ENTRIES', entries: ['Trainspotting'] };
+    const nextState = reducer(initialState, action );
+    expect(nextState).to.equal(fromJS({
+      entries: ['Trainspotting']
+    }));
+  });
+  
+  it('handles NEXT', () => {
+    const initialState = fromJS({
+      entries: ['Trainspotting', '28 Days Later']
+    });
+    const action = {type: 'NEXT'};
+    const nextState = reducer(initialState, action);
+
+    expect(nextState).to.equal(fromJS({
+      vote: {
+        pair: ['Trainspotting', '28 Days Later'],
+        tally: {Transformation: 1}
+      },
+      entries: []
+    }));
+  });
+    
+  it('handles VOTE', () => { 
+    const initialState = fromJS({
+      vote: {
+        pair: ['Trainspotting', '28 Days Later']
+      },
+      entries: []
+    });
+    const action = {type: 'VOTE', entry: 'Trainspotting'};
+    const nextState = reducer(initialState, action);
+
+    expect(nextState).to.equal(fromJS({
+      vote: {
+        pair: ['Trainspotting', '28 Days Later'],
+        tally: {Transformation: 1}
+      },
+      entries: []
+    }));
+  });
+});
+#+END_SRC   
+Our reducer should delegate to one of the core functions based on the type of
+the action. It also knows how to unpack the additional arguments of each
+function from the action object:
+
+#+BEGIN_SRC 
+import {setEntries, next, vote} from './core';
+
+export default function reducer(state, action) {
+  switch (action.type) {
+    case 'SET_ENTRIES':
+      return setEntries(state, action.entries);
+    case 'NEXT':
+      return next(state);
+    case 'VOTE':
+      return vote(state, action.entry)
+  }
+  return state;
+}
+#+END_SRC
+
+#+BEGIN_SRC sh
+npm run test
+#+END_SRC
+
+#+RESULTS:
+
+ > voting-server@1.0.0 test /usr/local/src/jstutorials/voting-server
+ > mocha --compilers  js:babel-core/register  --require  ./test/test_helper.js  --recursive 
+
+| application  | logic   |         |             |          |         |         |       |       |         |
+| setEntries   |         |         |             |          |         |         |       |       |         |
+|              | ✓       | adds    | the         | entries  | to      | the     | state |       |         |
+| next         |         |         |             |          |         |         |       |       |         |
+|              | ✓       | takes   | the         | next     | two     | entries | under | vote  |         |
+|              | ✓       | puts    | winner      | of       | current | vote    | back  | to    | entries |
+|              | ✓       | puts    | both        | from     | tied    | vote    | back  | to    | entries |
+|              | ✓       | marks   | winner      | when     | just    | one     | entry | left  |         |
+| vote         |         |         |             |          |         |         |       |       |         |
+|              | ✓       | creates | a           | tally    | for     | the     | voted | entry |         |
+|              | ✓       | adds    | to          | existing | tally   | for     | the   | voted | entry   |
+|              |         |         |             |          |         |         |       |       |         |
+| immutability |         |         |             |          |         |         |       |       |         |
+| a            | number  |         |             |          |         |         |       |       |         |
+|              | ✓       | is      | immutable   |          |         |         |       |       |         |
+| A            | List    |         |             |          |         |         |       |       |         |
+|              | ✓       | is      | immutable   |          |         |         |       |       |         |
+| a            | tree    |         |             |          |         |         |       |       |         |
+|              | ✓       | is      | immatable   |          |         |         |       |       |         |
+|              |         |         |             |          |         |         |       |       |         |
+| Reducer      |         |         |             |          |         |         |       |       |         |
+|              | ✓       | handles | SET_ENTRIES |          |         |         |       |       |         |
+|              | ✓       | handles | NEXT        |          |         |         |       |       |         |
+|              | ✓       | handles | VOTE        |          |         |         |       |       |         |
+|              |         |         |             |          |         |         |       |       |         |
+|              |         |         |             |          |         |         |       |       |         |
+| 13           | passing | (98ms)  |             |          |         |         |       |       |         |
+|              |         |         |             |          |         |         |       |       |         |
+
+test/reducer_spec.js
+describe('reducer', () => {
+
+  // ...
+
+  it('has an initial state', () => {
+    const action = {type: 'SET_ENTRIES', entries: ['Trainspotting']};
+    const nextState = reducer(undefined, action);
+    expect(nextState).to.equal(fromJS({
+      entries: ['Trainspotting']
+    }));
+  });
+
+});
+
+Since our application's logic is in core.js, it makes sense to introduce the
+initial state there:
+
+src/core.js
+export const INITIAL_STATE = Map();
+
+In the reducer we'll import it and use it as the default value of the state
+argument:
+
+src/reducer.js
+import {setEntries, next, vote, INITIAL_STATE} from './core';
+
+export default function reducer(state = INITIAL_STATE, action) {
+  switch (action.type) {
+  case 'SET_ENTRIES':
+    return setEntries(state, action.entries);
+  case 'NEXT':
+    return next(state);
+  case 'VOTE':
+    return vote(state, action.entry)
+  }
+  return state;
+}
+
+#+BEGIN_SRC sh
+npm run test
+#+END_SRC
+
+#+RESULTS:
+|              |                     |             |                                          |           |                       |             |       |       |         |
+| >            | voting-server@1.0.0 | test        | /usr/local/src/jstutorials/voting-server |           |                       |             |       |       |         |
+| >            | mocha               | --compilers | js:babel-core/register                   | --require | ./test/test_helper.js | --recursive |       |       |         |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+| application  | logic               |             |                                          |           |                       |             |       |       |         |
+| setEntries   |                     |             |                                          |           |                       |             |       |       |         |
+|              | ✓                   | adds        | the                                      | entries   | to                    | the         | state |       |         |
+| next         |                     |             |                                          |           |                       |             |       |       |         |
+|              | ✓                   | takes       | the                                      | next      | two                   | entries     | under | vote  |         |
+|              | ✓                   | puts        | winner                                   | of        | current               | vote        | back  | to    | entries |
+|              | ✓                   | puts        | both                                     | from      | tied                  | vote        | back  | to    | entries |
+|              | ✓                   | marks       | winner                                   | when      | just                  | one         | entry | left  |         |
+| vote         |                     |             |                                          |           |                       |             |       |       |         |
+|              | ✓                   | creates     | a                                        | tally     | for                   | the         | voted | entry |         |
+|              | ✓                   | adds        | to                                       | existing  | tally                 | for         | the   | voted | entry   |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+| immutability |                     |             |                                          |           |                       |             |       |       |         |
+| a            | number              |             |                                          |           |                       |             |       |       |         |
+|              | ✓                   | is          | immutable                                |           |                       |             |       |       |         |
+| A            | List                |             |                                          |           |                       |             |       |       |         |
+|              | ✓                   | is          | immutable                                |           |                       |             |       |       |         |
+| a            | tree                |             |                                          |           |                       |             |       |       |         |
+|              | ✓                   | is          | immatable                                |           |                       |             |       |       |         |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+| Reducer      |                     |             |                                          |           |                       |             |       |       |         |
+|              | ✓                   | handles     | SET_ENTRIES                              |           |                       |             |       |       |         |
+|              | ✓                   | handles     | NEXT                                     |           |                       |             |       |       |         |
+|              | ✓                   | handles     | VOTE                                     |           |                       |             |       |       |         |
+|              | ✓                   | has         | an                                       | initial   | state                 |             |       |       |         |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+| 14           | passing             | (40ms)      |                                          |           |                       |             |       |       |         |
+|              |                     |             |                                          |           |                       |             |       |       |         |
+This ability to batch and/or replay a collection of actions is a major benefit
+of the action/reducer model of state transitions, when compared to calling the
+core functions directly. For example, given that actions are just objects that
+you can also serialize to JSON, you could easily send them over to a Web Worker
+and run your reducer logic there. Or you can even send them over the network,
+as we're going to do later!
+
+Note that we are using plain objects as actions instead of Immutable data
+structures. This is something Redux actually requires us to do. 
+
+** A Taste of Reducer Composition
+   CLOCK: [2015-11-26 বৃহঃ 00:15]--[2015-11-26 বৃহঃ 00:25] =>  0:10
+ 
+Our core functionality is currently defined so that each function takes the
+whole state of the application and returns the whole, next state of the
+application.
+
+It is easy to see how keeping to this pattern may not be a good idea in large
+applications. If each and every operation in the application needs to be aware
+of the structure of the whole state, things can easily get brittle. If you
+wanted to change the shape of the state, it would require a whole lot of
+changes.
+
+It is a much better idea to, whenever you can, make operations work on the
+smallest piece (or subtree) of the state possible. What we're talking about is
+modularization: Have the functionality that deals with a given piece of data
+deal with only that part of the data, as if the rest didn't exist.
+
+Our application is so tiny that we don't have a problem of this kind yet, but
+we do already have one opportunity to improve on this: There is no reason for
+the vote function to receive the whole app state, since it only works on the
+'vote' part of it. That's the only thing it should know about. We can modify
+the existing unit tests for vote to reflect this idea:
+
+test/core_spec.js
+describe('vote', () => {
+
+  it('creates a tally for the voted entry', () => {
+    const state = Map({
+      pair: List.of('Trainspotting', '28 Days Later')
+    });
+    const nextState = vote(state, 'Trainspotting')
+    expect(nextState).to.equal(Map({
+      pair: List.of('Trainspotting', '28 Days Later'),
+      tally: Map({
+        'Trainspotting': 1
+      })
+    }));
+  });
+
+  it('adds to existing tally for the voted entry', () => {
+    const state = Map({
+      pair: List.of('Trainspotting', '28 Days Later'),
+      tally: Map({
+        'Trainspotting': 3,
+        '28 Days Later': 2
+      })
+    });
+    const nextState = vote(state, 'Trainspotting');
+    expect(nextState).to.equal(Map({
+      pair: List.of('Trainspotting', '28 Days Later'),
+      tally: Map({
+        'Trainspotting': 4,
+        '28 Days Later': 2
+      })
+    }));
+  });
+
+});
+
+As we see, this also simplifies the test code, which is usually a good sign!
+
+The vote implementation should now just take the vote part of the state, and
+update its tally:
+
+src/core.js
+export function vote(voteState, entry) {
+  return voteState.updateIn(
+    ['tally', entry],
+    0,
+    tally => tally + 1
+  );
+}
+
+Now it becomes the job of our reducer to pick apart the state so that it gives
+only the relevant part to the vote function:
+
+src/reducer.js
+export default function reducer(state = INITIAL_STATE, action) {
+  switch (action.type) {
+  case 'SET_ENTRIES':
+    return setEntries(state, action.entries);
+  case 'NEXT':
+    return next(state);
+  case 'VOTE':
+    return state.update('vote',
+                        voteState => vote(voteState, action.entry));
+  }
+  return state;
+}
+
+This is a small example of the kind of pattern that becomes much more important
+the larger an application gets: The main reducer function only hands parts of
+the state to lower-level reducer functions. We separate the job of finding the
+right location in the state tree from applying the update to that location.
+
+The Redux documentation for reducers goes into these patterns of reducer
+composition in a lot more detail, and also describes some helper functions that
+makes reducer composition easier in many cases.
+
+** Introducing The Redux Store 
+Now that we have a reducer, we can start looking at how this all plugs into
+Redux itself.
+
+As we just saw, if you had a collection of all the actions that are ever going
+to occur in your application, you could just call reduce. Out pops the final
+state of your app. Of course, you usually don't have a collection of all those
+actions. They will arrive spread out over time, as things happen in the world:
+When users interact with the app, when data is received from networks, or when
+timeouts trigger.
+
+To deal with this reality, we can use a Redux Store. It is an object that, as
+the name implies, stores the state of your application over time.
+
+A Redux Store is initialized with a reducer function, such as the one we have
+just implemented:
+
+Now that we have a reducer, we can start looking at how this all plugs into
+Redux itself.
+
+As we just saw, if you had a collection of all the actions that are ever going
+to occur in your application, you could just call reduce. Out pops the final
+state of your app. Of course, you usually don't have a collection of all those
+actions. They will arrive spread out over time, as things happen in the world:
+When users interact with the app, when data is received from networks, or when
+timeouts trigger.
+
+To deal with this reality, we can use a Redux Store. It is an object that, as
+the name implies, stores the state of your application over time.
+
+A Redux Store is initialized with a reducer function, such as the one we have
+just implemented:
+
+import {createStore} from 'redux';
+
+const store = createStore(reducer);
+
+What you can then do is dispatch actions to that Store. The Store will
+internally use your reducer to apply the actions to the current state, and
+store the resulting, next state:
+
+store.dispatch({type: 'NEXT'});
+
+At any point in time, you can obtain the current state from inside the Store:
+
+store.getState();
+
+We're going to set up and export a Redux Store in a file called store.js. Let's
+test it first. We should be able to make a store, read its initial state,
+dispatch action, and witness the changed state:
+import {createStore} from 'redux';
+
+const store = createStore(reducer);
+
+What you can then do is dispatch actions to that Store. The Store will
+internally use your reducer to apply the actions to the current state, and
+store the resulting, next state:
+
+store.dispatch({type: 'NEXT'});
+
+At any point in time, you can obtain the current state from inside the Store:
+
+store.getState();
+
+We're going to set up and export a Redux Store in a file called store.js. Let's
+test it first. We should be able to make a store, read its initial state,
+dispatch action, and witness the changed state:
+
+test/store_spec.js
+import {Map, fromJS} from 'immutable';
+import {expect} from 'chai';
+
+import makeStore from '../src/store';
+
+describe('store', () => {
+
+  it('is a Redux store configured with the correct reducer', () => {
+    const store = makeStore();
+    expect(store.getState()).to.equal(Map());
+
+    store.dispatch({
+      type: 'SET_ENTRIES',
+      entries: ['Trainspotting', '28 Days Later']
+    });
+    expect(store.getState()).to.equal(fromJS({
+      entries: ['Trainspotting', '28 Days Later']
+    }));
+  });
+
+});
+
+Before we can create the Store, we need to add Redux into the project:
+
+#+BEGIN_SRC sh
+npm install --save redux
+#+END_SRC
+
+#+RESULTS:
+: redux@3.0.4 node_modules/redux
+
+Then we can create store.js, where we simply call createStore with our reducer:
+
+src/store.js
+import {createStore} from 'redux';
+import reducer from './reducer';
+
+export default function makeStore() {
+  return createStore(reducer);
+}
+
+So, the Redux store ties things together into something we'll be able to use as
+the central point of our application: It holds the current state, and over time
+can receive actions that evolve the state from one version to the next, using
+the core application logic we have written and exposed through the reducer.
+Question: How many variables do you need in a Redux application?
+Answer: One. The one inside the store. 
+
+This notion may sound ludicrous at first - at least if you haven't done much
+functional programming. How can you do anything useful with just one variable? 
+
+But the fact is we don't need any more variables than that. The current state
+tree is the only thing that varies over time in our core application. The rest
+is all constants and immutable values. 
+
+It is quite remarkable just how small the integration surface area between our
+application code and Redux actually is. Because we have a generic reducer
+function, that's the only thing we need to let Redux know about. The rest is
+all in our own, non-framework-specific, highly portable and purely functional
+code!
+
+If we now create the index.js entry point for the application, we can have it
+create and export a store:
+
+index.js
+import makeStore from './src/store';
+
+export const store = makeStore();
+
+Since we also export the store, you could now fire up a Node REPL (with e.g.
+babel-node), require the index.js file and interact with the application using
+the store.
+
+** Setting Up a Socket.io Server 
+#+BEGIN_SRC sh 
+npm install --save socket.io
+#+END_SRC
+This creates a Socket.io server, as well as a regular HTTP server bound to port
+8090. The choice of port is arbitrary, but it needs to match the port we'll
+later use to connect from clients.
+
+We can then have index.js call this function, so that a server is started when
+the app starts:
+
+index.js
+import makeStore from './src/store';
+import startServer from './src/server';
+
+export const store = makeStore();
+startServer();
+
+If we now add a start command to our package.json, we'll make startup a bit
+simpler:
+
+package.json
+"scripts": {
+  "start": "babel-node index.js",
+  "test": "mocha --compilers js:babel-core/register  --require ./test/test_helper.js  --recursive",
+  "test:watch": "npm run test -- --watch"
+},
+
+Now we can simply start the server (and create the Redux store) by typing:
+
+npm run start
+
+The babel-node command comes from the babel-cli package that we installed
+earlier. It allows us to easily run Node code with Babel transpiling support
+enabled. It adds some performance overhead so it isn't generally recommended
+for production use, but it works well for the purposes of our tutorial. 
+
+** Broadcasting State from A Redux Listener 
+
+We have a Socket.io server and we have a Redux state container but they aren't
+yet integrated in any way. The next thing we'll do is change that.
+
+Our server should be able to let clients know about the current state of the
+application (i.e. "what is being voted on?", "What is the current tally of
+votes?", "Is there a winner yet?"). It can do so by emitting a Socket.io event
+to all connected clients whenever something changes.
+
+And how can we know when something has changed? Well, Redux provides something
+for exactly this purpose: You can subscribe to a Redux store. You do that by
+providing a function that the store will call after every action it applies,
+when the state has potentially changed. It is essentially a callback to state
+changes within the store.
+
+We'll do this in startServer, so let's give it the Redux store first:
+
+index.js
+import makeStore from './src/store';
+import {startServer} from './src/server';
+
+export const store = makeStore();
+startServer(store);
+
+What we'll do is subscribe a listener to the store that reads the current
+state, turns it into a plain JavaScript object, and emits it as a state event
+on the Socket.io server. The result will be that a JSON-serialized snapshot of
+the state is sent over all active Socket.io connections.
+
+src/server.js
+import Server from 'socket.io';
+
+export function startServer(store) {
+  const io = new Server().attach(8090);
+
+  store.subscribe(
+    () => io.emit('state', store.getState().toJS())
+  );
+}
+
+We are now publishing the whole state to everyone whenever any changes occur.
+This may end up causing a lot of data transfer. One could think of various ways
+of optimizing this (e.g. just sending the relevant subset, sending diffs
+instead of snapshots...), but this implementation has the benefit of being easy
+to write, so we'll just use it for our example app. 
+
+In addition to sending a state snapshot whenever state changes, it will be
+useful for clients to immediately receive the current state when they connect
+to the application. That lets them sync their client-side state to the latest
+server state right away.
+
+We can listen to 'connection' events on our Socket.io server. We get one each
+time a client connects. In the event listener we can emit the current state
+right away:
+
+src/server.js
+import Server from 'socket.io';
+
+export function startServer(store) {
+  const io = new Server().attach(8090);
+
+  store.subscribe(
+    () => io.emit('state', store.getState().toJS())
+  );
+
+  io.on('connection', (socket) => {
+    socket.emit('state', store.getState().toJS());
+  });
+
+}
+
+** Receiving Remote Redux Actions 
+   CLOCK: [2015-11-26 বৃহঃ 12:07]--[2015-11-26 বৃহঃ 13:07] =>  1:00
+
+In addition to emitting the application state out to clients, we should also be
+able to receive updates from them: Voters will be assigning votes, and the vote
+organizer will be moving the contest forward using the NEXT action.
+
+The solution we'll use for this is actually quite simple. What we can do is
+simply have our clients emit 'action' events that we feed directly into our
+Redux store:
+
+src/server.js
+import Server from 'socket.io';
+
+export function startServer(store) {
+  const io = new Server().attach(8090);
+
+  store.subscribe(
+  () => io.emit('state', store.getState().toJS())
+  );
+
+  io.on('connection', (socket) => {
+    socket.emit('state', store.getState().toJS());
+    socket.on('action', store.dispatch.bind(store));
+  });
+
+}
+
+This is where we start to go beyond "regular Redux", since we are now
+essentially accepting remote actions into our store. However, the Redux
+architecture makes it remarkably easy to do: Since actions are just JavaScript
+objects, and JavaScript objects can easily be sent over the network, we
+immediately got a system with which any number of clients can participate in
+voting. That's no small feat!
+
+There are some obvious security considerations here. We're allowing any
+connected Socket.io client to dispatch any action into the Redux store. 
+
+In most real-world cases, there should be some kind of firewall here, probably
+not dissimilar to the one in the Vert.x Event Bus Bridge. Apps that have an
+authentication mechanism should also plug it in here. 
+
+Our server now operates essentially like this:
+
+1 A client sends an action to the server. 
+2 The server hands the action to the Redux Store. 
+3 The Store calls the reducer and the reducer executes the logic related to the
+  action. 
+4 The Store updates its state based on the return value of the reducer. 
+5 The Store executes the listener function subscribed by the server. 
+6 The server emits a 'state' event. 
+7 All connected clients - including the one that initiated the original action -
+  receive the new state. 
+
+Before we're done with the server, let's have it load up a set of test entries
+for us to play with, so that we have something to look at once we have the
+whole system going. We can add an entries.json file that lists the contest
+entries. For example, the list of Danny Boyle's feature films to date - feel
+free to substitute your favorite subject matter though!
+
+entries.json
+[
+  "Shallow Grave",
+  "Trainspotting",
+  "A Life Less Ordinary",
+  "The Beach",
+  "28 Days Later",
+  "Millions",
+  "Sunshine",
+  "Slumdog Millionaire",
+  "127 Hours",
+  "Trance",
+  "Steve Jobs"
+]
+
+We can just load this in into index.js and then kick off the vote by
+dispatching a NEXT action:
+
+index.js
+import makeStore from './src/store';
+import {startServer} from './src/server';
+
+export const store = makeStore();
+startServer(store);
+
+store.dispatch({
+  type: 'SET_ENTRIES',
+  entries: require('./entries.json')
+});
+store.dispatch({type: 'NEXT'});
+
+And with that, we're ready to switch our focus to the client application.
+
+* The Client Application 
+  CLOCK: [2015-11-26 বৃহঃ 13:08]
+  :PROPERTIES:
+  :Effort:   0:40
+  :END:
+During the remainder of this tutorial we'll be writing a React application that
+connects to the server we now have and makes the voting system come alive to
+users.
+
+We're going to use Redux again on the client. This is arguably the most common
+use case for Redux: As the underlying engine of a React application. We've
+already seen how Redux itself works, and soon we'll learn exactly how it fits
+together with React and how using it influences the design of React apps.
+
+** Client Project Setup 
+   CLOCK: [2015-11-26 বৃহঃ 13:27]
+   :PROPERTIES:
+   :Effort:   0:12
+   :END:
+The very first thing we're going to do is start a fresh NPM project, just like
+we did with the server.
+
+mkdir voting-client
+cd voting-client
+
+#+BEGIN_SRC sh 
+npm init -y
+#+END_SRC
+
+#+RESULTS:
+
+We're going to need an HTML host page for the app. Let's put that in dist/index.html:
+
+dist/index.html
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="app"></div>
+  <script src="bundle.js"></script>
+</body>
+</html>
+
+This document just contains a <div> with id app, into which we'll put our application. It expects
+there to be a JavaScript file called bundle.js in the same directory.
+
+Let's also create the first JavaScript file for this app. This will be the application's entry point
+file. For now we can just put a simple logging statement in it:
+
+src/index.js
+console.log('I am alive!');
+
+To ease our client development workflow, we're going to use Webpack along with its development server,
+so let's add both to the project:
+
+#+BEGIN_SRC sh
+npm install --save-dev webpack webpack-dev-server
+#+END_SRC
+
+#+RESULTS:
+| webpack-dev-server@1.14.0 | node_modules/webpack-dev-server    |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | connect-history-api-fallback@1.1.0 |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | stream-cache@0.0.2                 |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | strip-ansi@3.0.0                   | (ansi-regex@2.0.0)       |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | supports-color@3.1.2               | (has-flag@1.0.0)         |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | http-proxy@1.12.0                  | (eventemitter3@1.1.1,    | requires-port@0.0.1)        |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | optimist@0.6.1                     | (wordwrap@0.0.3,         | minimist@0.0.10)            |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | compression@1.6.0                  | (bytes@2.1.0,            | on-headers@1.0.1,           | vary@1.1.0,                 | compressible@2.0.6,    | debug@2.2.0,       | accepts@1.3.0)          |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | express@4.13.3                     | (escape-html@1.0.2,      | merge-descriptors@1.0.0,    | cookie@0.1.3,               | array-flatten@1.1.1,   | utils-merge@1.0.0, | content-type@1.0.1,     | cookie-signature@1.0.6, | vary@1.0.1,     | methods@1.1.1,        | range-parser@1.0.3, | content-disposition@0.5.0, | serve-static@1.10.0,     | fresh@0.3.0,             | etag@1.7.0,   | path-to-regexp@0.1.7, | parseurl@1.3.0,         | depd@1.0.1,               | qs@4.0.0,    | on-finished@2.3.0, | finalhandler@0.4.0,    | debug@2.2.0,  | proxy-addr@1.0.8,      | accepts@1.2.13,          | send@0.13.0, | type-is@1.6.9) |
+| ├──                       | webpack-dev-middleware@1.4.0       | (mime@1.3.4,             | memory-fs@0.3.0)            |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | sockjs@0.3.15                      | (node-uuid@1.4.7,        | faye-websocket@0.9.4)       |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | serve-index@1.7.2                  | (escape-html@1.0.2,      | parseurl@1.3.0,             | batch@0.5.2,                | http-errors@1.3.1,     | mime-types@2.1.7,  | accepts@1.2.13,         | debug@2.2.0)            |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| └──                       | sockjs-client@1.0.3                | (json3@3.3.2,            | inherits@2.0.1,             | debug@2.2.0,                | url-parse@1.0.5,       | eventsource@0.1.6, | faye-websocket@0.7.3)   |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+|                           |                                    |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| webpack@1.12.9            | node_modules/webpack               |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | interpret@0.6.6                    |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | tapable@0.1.10                     |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | clone@1.0.2                        |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | async@1.5.0                        |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | esprima@2.7.0                      |                          |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | supports-color@3.1.2               | (has-flag@1.0.0)         |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | enhanced-resolve@0.9.1             | (graceful-fs@4.1.2,      | memory-fs@0.2.0)            |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | mkdirp@0.5.1                       | (minimist@0.0.8)         |                             |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | memory-fs@0.3.0                    | (errno@0.1.4,            | readable-stream@2.0.4)      |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | optimist@0.6.1                     | (wordwrap@0.0.3,         | minimist@0.0.10)            |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | webpack-core@0.6.8                 | (source-map@0.4.4,       | source-list-map@0.1.5)      |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | uglify-js@2.6.1                    | (async@0.2.10,           | uglify-to-browserify@1.0.2, | source-map@0.5.3,           | yargs@3.10.0)          |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | loader-utils@0.2.12                | (big.js@3.1.3,           | json5@0.4.0)                |                             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| ├──                       | watchpack@0.2.9                    | (graceful-fs@4.1.2,      | async@0.9.2,                | chokidar@1.3.0)             |                        |                    |                         |                         |                 |                       |                     |                            |                          |                          |               |                       |                         |                           |              |                    |                        |               |                        |                          |              |                |
+| └──                       | node-libs-browser@0.5.3            | (https-browserify@0.0.0, | tty-browserify@0.0.0,       | constants-browserify@0.0.1, | path-browserify@0.0.0, | punycode@1.3.2,    | string_decoder@0.10.31, | os-browserify@0.1.2,    | process@0.11.2, | domain-browser@1.1.4, | assert@1.3.0,       | querystring-es3@0.2.1,     | timers-browserify@1.4.1, | stream-browserify@1.0.0, | events@1.1.0, | vm-browserify@0.0.4,  | readable-stream@1.1.13, | console-browserify@1.1.0, | util@0.10.3, | url@0.10.3,        | http-browserify@1.7.0, | buffer@3.5.2, | browserify-zlib@0.1.4, | crypto-browserify@3.2.8) |              |                |
+
+If you don't have them already, also install the same packages globally so that you'll be able to
+conveniently launch them from the command line: npm install -g webpack webpack-dev-server. 
+
+Next, let's add a Webpack configuration file at the root of the project, that matches the files and
+directories we've created:
+
+#+BEGIN_SRC sh
+npm install --save-dev babel-core babel-loader babel-preset-es2015 babel-preset-react
+#+END_SRC
+
+#+RESULTS:
+| babel-loader@6.2.0         | node_modules/babel-loader                                   |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | object-assign@4.0.1                                         |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| └──                        | loader-utils@0.2.12                                         | (big.js@3.1.3,                               | json5@0.4.0)                                  |                                    |                                   |                                |                       |                    |                       |                       |
+|                            |                                                             |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| babel-preset-react@6.1.18  | node_modules/babel-preset-react                             |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-flow-strip-types@6.1.18              | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-react-display-name@6.1.18            | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-syntax-flow@6.1.18                             | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-react-jsx-source@6.1.18              | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-syntax-jsx@6.1.18                              | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| └──                        | babel-plugin-transform-react-jsx@6.2.0                      | (babel-helper-builder-react-jsx@6.2.0,       | babel-runtime@5.8.34)                         |                                    |                                   |                                |                       |                    |                       |                       |
+|                            |                                                             |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| babel-core@6.2.1           | node_modules/babel-core                                     |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | slash@1.0.0                                                 |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-messages@6.2.1                                        |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-template@6.2.0                                        |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | path-exists@1.0.0                                           |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | shebang-regex@1.0.0                                         |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | path-is-absolute@1.0.0                                      |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-helpers@6.1.20                                        |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | private@0.1.6                                               |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | convert-source-map@1.1.2                                    |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | source-map@0.5.3                                            |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | debug@2.2.0                                                 | (ms@0.7.1)                                   |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babylon@6.2.0                                               |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-types@6.2.0                                           | (to-fast-properties@1.0.1,                   | esutils@2.0.2)                                |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | minimatch@2.0.10                                            | (brace-expansion@1.1.1)                      |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-code-frame@6.1.18                                     | (js-tokens@1.0.2,                            | esutils@2.0.2,                                | line-numbers@0.2.0,                | chalk@1.1.1,                      | repeating@1.1.3)               |                       |                    |                       |                       |
+| ├──                        | babel-generator@6.2.0                                       | (trim-right@1.0.1,                           | repeating@1.1.3,                              | is-integer@1.0.6,                  | detect-indent@3.0.1)              |                                |                       |                    |                       |                       |
+| ├──                        | babel-traverse@6.2.0                                        | (globals@8.12.1,                             | repeating@1.1.3,                              | invariant@2.2.0)                   |                                   |                                |                       |                    |                       |                       |
+| ├──                        | json5@0.4.0                                                 |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | lodash@3.10.1                                               |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-register@6.2.0                                        | (home-or-tmp@1.0.0,                          | source-map-support@0.2.10,                    | core-js@1.2.6)                     |                                   |                                |                       |                    |                       |                       |
+| └──                        | babel-runtime@5.8.34                                        | (core-js@1.2.6)                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+|                            |                                                             |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| babel-preset-es2015@6.1.18 | node_modules/babel-preset-es2015                            |                                              |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-block-scoped-functions@6.1.18 | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-check-es2015-constants@6.2.0                   | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-computed-properties@6.1.18    | (babel-template@6.2.0,                       | babel-helper-define-map@6.2.0,                | babel-runtime@5.8.34)              |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-arrow-functions@6.1.18        | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-destructuring@6.1.18          | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-spread@6.1.18                 | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-for-of@6.1.18                 | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-function-name@6.1.18          | (babel-types@6.2.0,                          | babel-helper-function-name@6.2.0,             | babel-runtime@5.8.34)              |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-unicode-regex@6.1.18          | (regexpu@1.3.0,                              | babel-helper-regex@6.1.18,                    | babel-runtime@5.8.34)              |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-sticky-regex@6.1.18           | (babel-helper-regex@6.1.18,                  | babel-types@6.2.0,                            | babel-runtime@5.8.34)              |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-object-super@6.1.18           | (babel-helper-replace-supers@6.2.0,          | babel-runtime@5.8.34)                         |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-template-literals@6.1.18      | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-typeof-symbol@6.1.18          | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-literals@6.1.18               | (babel-runtime@5.8.34)                       |                                               |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-shorthand-properties@6.1.18   | (babel-types@6.2.0,                          | babel-runtime@5.8.34)                         |                                    |                                   |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-modules-commonjs@6.2.0        | (babel-plugin-transform-strict-mode@6.2.0,   | babel-template@6.2.0,                         | babel-types@6.2.0,                 | babel-runtime@5.8.34)             |                                |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-parameters@6.1.18             | (babel-helper-get-function-arity@6.2.0,      | babel-helper-call-delegate@6.2.0,             | babel-template@6.2.0,              | babel-types@6.2.0,                | babel-traverse@6.2.0,          | babel-runtime@5.8.34) |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-block-scoping@6.1.18          | (babel-types@6.2.0,                          | babel-template@6.2.0,                         | babel-traverse@6.2.0,              | lodash@3.10.1,                    | babel-runtime@5.8.34)          |                       |                    |                       |                       |
+| ├──                        | babel-plugin-transform-es2015-classes@6.2.2                 | (babel-messages@6.2.1,                       | babel-helper-optimise-call-expression@6.1.18, | babel-helper-replace-supers@6.2.0, | babel-helper-function-name@6.2.0, | babel-helper-define-map@6.2.0, | babel-template@6.2.0, | babel-types@6.2.0, | babel-traverse@6.2.0, | babel-runtime@5.8.34) |
+| └──                        | babel-plugin-transform-regenerator@6.2.0                    | (babel-plugin-syntax-async-functions@6.1.18, | private@0.1.6,                                | babylon@6.2.0,                     | babel-types@6.2.0,                | babel-traverse@6.2.0,          | babel-runtime@5.8.34) |                    |                       |                       |
+
+
+You should now be able to run Webpack to produce bundle.js:
+
+webpack
+
+You should also be able to start the dev server, after which the test page (including the logging
+statement from index.js) should be accessible in localhost:8080.
+
+webpack-dev-server --host=ip
+
+In this tutorial we won't be spending any time on CSS. If you'd like the app to look nicer, you can of
+course add your own styles as you go along. 
+
+Alternatively, you can grab some styling from this commit. In addition to a CSS file, it adds Webpack
+support for including (and autoprefixing) it, as well as a slightly improved result visualization
+component. 
+
+*** Unit Testing support 
+
+We'll be writing some unit tests for the client code too. We can use the same unit test libraries that
+we used on the server - Mocha and Chai - to test it:
+#+BEGIN_SRC sh
+npm install --save-dev mocha chai
+#+END_SRC
+
+#+RESULTS:
+| chai@3.4.1  | node_modules/chai          |                     |                    |                   |
+| ├──         | assertion-error@1.0.1      |                     |                    |                   |
+| ├──         | type-detect@1.0.0          |                     |                    |                   |
+| └──         | deep-eql@0.1.3             | (type-detect@0.1.1) |                    |                   |
+|             |                            |                     |                    |                   |
+| mocha@2.3.4 | node_modules/mocha         |                     |                    |                   |
+| ├──         | escape-string-regexp@1.0.2 |                     |                    |                   |
+| ├──         | diff@1.4.0                 |                     |                    |                   |
+| ├──         | commander@2.3.0            |                     |                    |                   |
+| ├──         | supports-color@1.2.0       |                     |                    |                   |
+| ├──         | growl@1.8.1                |                     |                    |                   |
+| ├──         | debug@2.2.0                | (ms@0.7.1)          |                    |                   |
+| ├──         | mkdirp@0.5.0               | (minimist@0.0.8)    |                    |                   |
+| ├──         | jade@0.26.3                | (commander@0.6.1,   | mkdirp@0.3.0)      |                   |
+| └──         | glob@3.2.3                 | (inherits@2.0.1,    | graceful-fs@2.0.3, | minimatch@0.2.14) |
+
+
+We're going to test our React components as well, and that's going to require a DOM. One alternative
+would be to run tests in an actual web browser with a library like Karma. However, we don't actually
+need to do that because we can get away with using jsdom, a pure JavaScript DOM implementation that
+runs in Node:
+#+BEGIN_SRC sh
+npm install --save-dev jsdom
+#+END_SRC
+
+#+RESULTS:
+| jsdom@7.1.0 | node_modules/jsdom       |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | acorn-globals@1.0.9      |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | webidl-conversions@2.0.1 |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | xml-name-validator@2.0.1 |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | abab@1.0.1               |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | symbol-tree@3.1.4        |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | tough-cookie@2.2.1       |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | nwmatcher@1.3.7          |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | cssom@0.3.0              |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | whatwg-url-compat@0.6.5  | (tr46@0.0.2)           |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | parse5@1.5.0             |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | acorn@2.6.4              |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | escodegen@1.7.1          | (estraverse@1.9.3,     | esutils@2.0.2,       | esprima@1.2.5,          | optionator@0.5.0, | source-map@0.2.0) |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | htmlparser2@3.8.3        | (domelementtype@1.3.0, | entities@1.0.0,      | readable-stream@1.1.13, | domhandler@2.3.0, | domutils@1.5.1)   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+| ├──         | request@2.67.0           | (aws-sign2@0.6.0,      | forever-agent@0.6.1, | tunnel-agent@0.4.1,     | oauth-sign@0.8.0, | caseless@0.11.0,  | is-typedarray@1.0.0, | stringstream@0.0.5, | isstream@0.1.2, | json-stringify-safe@5.0.1, | extend@3.0.0, | node-uuid@1.4.7, | qs@5.2.0, | combined-stream@1.0.5, | mime-types@2.1.7, | form-data@1.0.0-rc3, | hawk@3.1.2, | bl@1.0.0, | http-signature@1.1.0, | har-validator@2.0.3) |
+| └──         | cssstyle@0.2.30          |                        |                      |                         |                   |                   |                      |                     |                 |                            |               |                  |           |                        |                   |                      |             |           |                       |                      |
+
+
+The latest versions of jsdom require io.js or Node.js 4.0.0. If you are running an older Node version,
+you need to explicitly install an older version: npm install --save-dev jsdom@3 
+
+We also need a bit of setup code for jsdom before it's ready for React to use. We essentially need to
+create jsdom versions of the document and window objects that would normally be provided by the web
+browser. Then we need to put them on the global object, so that they will be discovered by React when
+it accesses document or window. We can set up a test helper file for this kind of setup code:
+
+test/test_helper.js
+import jsdom from 'jsdom';
+
+const doc = jsdom.jsdom('<!doctype html><html><body></body></html>');
+const win = doc.defaultView;
+
+global.document = doc;
+global.window = win;
+
+Additionally, we need to take all the properties that the jsdom window object contains, such as
+navigator, and hoist them on to the Node.js global object. This is done so that properties provided by
+window can be used without the window. prefix, which is what would happen in a browser environment.
+Some of the code inside React relies on this:
+
+test/test_helper.js
+import jsdom from 'jsdom';
+
+const doc = jsdom.jsdom('<!doctype html><html><body></body></html>');
+const win = doc.defaultView;
+
+global.document = doc;
+global.window = win;
+
+Object.keys(window).forEach((key) => {
+  if (!(key in global)) {
+    global[key] = window[key];
+  }
+});
+
+We're also going to be using Immutable collections, so we need to repeat the same trick we applied on
+the server to add Chai expectation support for them. We should install both the immutable and the
+chai-immutable package:
+#+BEGIN_SRC sh
+npm install --save immutable
+npm install --save-dev chai-immutable
+
+#+END_SRC
+
+#+RESULTS:
+| immutable@3.7.5      | node_modules/immutable      |
+| chai-immutable@1.5.3 | node_modules/chai-immutable |
+
+Then we should enable it in the test helper file:
+
+test/test_helper.js
+import jsdom from 'jsdom';
+import chai from 'chai';
+import chaiImmutable from 'chai-immutable';
+
+const doc = jsdom.jsdom('<!doctype html><html><body></body></html>');
+const win = doc.defaultView;
+
+global.document = doc;
+global.window = win;
+
+Object.keys(window).forEach((key) => {
+  if (!(key in global)) {
+    global[key] = window[key];
+  }
+});
+
+chai.use(chaiImmutable);
+
+The final step before we can run tests is to come up with the command that will run them, and put it
+in our package.json. Here it is:
+
+package.json
+"scripts": {
+  "test": "mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'"
+},
+
+This is almost the same command that we used in the server's package.json. There only difference is in
+the test file specification: On the server we just used --recursive, but that option won't find .jsx
+files. We need to use a glob that will find all .js and .jsx test files.
+
+It will be useful to continuously run tests whenever code changes occur. We can add a test:watch
+command for this. It is identical to the one for the server:
+
+package.json
+"scripts": {
+  "test": "mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'",
+  "test:watch": "npm run test -- --watch"
+},
+
+** React and react-hot-loader
+
+With the Webpack and Babel infrastructure in place, let's talk about React!
+
+What's really cool about the way React applications get built with Redux and Immutable is that we can
+write everything as so-called Pure Components (also sometimes called "Dumb Components"). As a concept,
+this is similar to pure functions, in that there are a couple of rules to follow:
+
+1 A pure component receives all its data as props, like a function receives all its data as arguments.
+  It should have no side effects, including reading data from anywhere else, initiating network
+  requests, etc. 
+2 A pure component generally has no internal state. What it renders is fully driven by its input
+  props. Rendering the same pure component twice with the same props should result in the same UI.
+  There's no hidden state inside the component that would cause the UI to differ between the two
+  renders. 
+
+This has a similar simplifying effect as using pure functions does: We can figure out what a component
+does by looking at what it receives as inputs and what it renders. There's nothing else we need to
+know about the component. We can also test it really easily - almost as easily as we were able to test
+our pure application logic.
+
+If components can't have state, where will the state be? In an immutable data structure inside a Redux
+store! We've already seen how that works. The big idea is to separate the state from the user
+interface code. The React components are just a stateless projection of the state at a given point in
+time.
+
+But, first things first, let's go ahead and add React to the project:
+#+BEGIN_SRC sh
+npm install --save react react-dom
+#+END_SRC
+
+#+RESULTS:
+| react-dom@0.14.3 | node_modules/react-dom |                      |                     |                     |                |                |
+|                  |                        |                      |                     |                     |                |                |
+| react@0.14.3     | node_modules/react     |                      |                     |                     |                |                |
+| ├──              | envify@3.4.0           | (through@2.3.8,      | jstransform@10.1.0) |                     |                |                |
+| └──              | fbjs@0.3.2             | (whatwg-fetch@0.9.0, | ua-parser-js@0.7.9, | loose-envify@1.1.0, | promise@7.0.4, | core-js@1.2.6) |
+
+We should also set up react-hot-loader. It will make our development workflow much faster by reloading
+code for us without losing the current state of the app.
+#+BEGIN_SRC sh
+npm install --save-dev react-hot-loader
+#+END_SRC
+
+#+RESULTS:
+| react-hot-loader@1.3.0 | node_modules/react-hot-loader |                  |
+| ├──                    | react-hot-api@0.4.7           |                  |
+| └──                    | source-map@0.4.4              | (amdefine@1.0.0) |
+
+It would be silly of us not to use react-hot-loader, since we'll have an architecture that makes using
+it really easy. In fact, the creation of both Redux and react-hot-loader are all part of the same
+story! 
+
+We need to make several updates to webpack.config.js to enable the hot loader. Here's the updated
+version:
+
+webpack.config.js
+var webpack = require('webpack');
+
+module.exports = {
+  entry: [
+    'webpack-dev-server/client?http://localhost:8080',
+    'webpack/hot/only-dev-server',
+    './src/index.js'
+  ],
+  module: {
+    loaders: [{
+      test: /\.jsx?$/,
+      exclude: /node_modules/,
+      loader: 'react-hot!babel'
+    }]
+  },
+  resolve: {
+    extensions: ['', '.js', '.jsx']
+  },
+  output: {
+    path: __dirname + '/dist',
+    publicPath: '/',
+    filename: 'bundle.js'
+  },
+  devServer: {
+    contentBase: './dist',
+    hot: true
+  },
+  plugins: [
+    new webpack.HotModuleReplacementPlugin()
+  ]
+};
+
+In the entry section we include two new things to our app's entry points: The client-side library of
+the Webpack dev server and the Webpack hot module loader. These provide the Webpack infrastructure for
+hot module replacement. The hot module replacement support isn't loaded by default, so we also need to
+load its plugin in the plugins section and enable it in the devServer section.
+
+In the loaders section we configure the react-hot loader to be used with our .js and .jsx files, in
+addition to Babel.
+
+If you now start or restart the development server, you should see a message about Hot Module
+Replacement being enabled in the console. We're good to go ahead with writing our first component.
+
+** Writing The UI for The Voting Screen 
+
+The voting screen of the application will be quite simple: While voting is ongoing, it'll always
+display two buttons - one for each of the entries being voted on. When the vote is over, it'll display
+the winner.
+
+We've been mainly doing test-first development so far, but for the React components we'll switch our
+workflow around: We'll write the components first and the tests second. This is because Webpack and
+react-hot-loader provide an even tighter feedback loop for development than unit tests do. Also,
+there's no better feedback when writing a UI than to actually see it in action!
+
+Let's just assume we're going to have a Voting component and render it in the application entry point.
+We can mount it into the #app div that we added to index.html earlier. We should also rename index.js
+to index.jsx since it'll now contain some JSX markup:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Voting from './components/Voting';
+
+const pair = ['Trainspotting', '28 Days Later'];
+
+ReactDOM.render(
+  <Voting pair={pair} />,
+  document.getElementById('app')
+);
+
+   
+
+The Voting component takes the current pair of entries as props. For now we can just hardcode that
+pair, and later we'll substitute it with real data. The component itself is pure and doesn't care
+where the data comes from.
+
+The entrypoint filename must also be changed in webpack.config.js:
+
+webpack.config.js
+entry: [
+  'webpack-dev-server/client?http://localhost:8080',
+  'webpack/hot/only-dev-server',
+  './src/index.jsx'
+],
+
+If you start (or restart) webpack-dev-server now, you'll see it complain about the missing Voting
+component. Let's fix that by writing our first version of it:
+
+src/components/Voting.jsx
+import React from 'react';
+
+export default React.createClass({
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  render: function() {
+    return <div className="voting">
+      {this.getPair().map(entry =>
+        <button key={entry}>
+          <h1>{entry}</h1>
+        </button>
+      )}
+    </div>;
+  }
+});
+
+This renders the pair of entries as buttons. You should be able to see them in your web browser. Try
+making some changes to the component code and see how they're immediately applied in the browser. No
+restarts, no page reloads. Talk about fast feedback!
+
+If you don't see what you expect, check the webpack-dev-server output as well as the console log in
+your browser's development tools for problems. 
+
+Now we can add our first unit test as well, for the functionality that we've got. It'll go in a file
+called Voting_spec.jsx:
+
+test/components/Voting_spec.jsx
+import Voting from '../../src/components/Voting';
+
+describe('Voting', () => {
+
+});
+
+To test that the component renders those buttons based on the pair prop, we should render it and see
+what the output was. To render a component in a unit test, we can use a helper function called
+renderIntoDocument, which will be in react/addons:
+
+test/components/Voting_spec.jsx
+import React from 'react/addons';
+import Voting from '../../src/components/Voting';
+
+const {renderIntoDocument} = React.addons.TestUtils;
+
+describe('Voting', () => {
+
+  it('renders a pair of buttons', () => {
+    const component = renderIntoDocument(
+      <Voting pair={["Trainspotting", "28 Days Later"]} />
+    );
+  });
+
+});
+
+Once the component is rendered, we can use another React helper function called
+scryRenderedDOMComponentsWithTag to find the button elements we expect there to be. We expect two of
+them, and we expect their text contents to be the two entries, respectively:
+
+test/components/Voting_spec.jsx
+import React from 'react/addons';
+import Voting from '../../src/components/Voting';
+import {expect} from 'chai';
+
+const {renderIntoDocument, scryRenderedDOMComponentsWithTag}
+  = React.addons.TestUtils;
+
+describe('Voting', () => {
+
+  it('renders a pair of buttons', () => {
+    const component = renderIntoDocument(
+      <Voting pair={["Trainspotting", "28 Days Later"]} />
+    );
+    const buttons = scryRenderedDOMComponentsWithTag(component, 'button');
+
+    expect(buttons.length).to.equal(2);
+    expect(buttons[0].textContent).to.equal('Trainspotting');
+    expect(buttons[1].textContent).to.equal('28 Days Later');
+  });
+
+});
+
+If you run the test now, you should see it pass:
+
+npm run test
+
+When one of those voting buttons is clicked, the component should invoke a callback function. Like the
+entry pair, the callback function should also be given to the component as a prop.
+
+Let's go ahead and add a unit test for this too. We can test this by simulating a click using the
+Simulate object from React's test utilities:
+
+test/components/Voting_spec.jsx
+import React from 'react/addons';
+import Voting from '../../src/components/Voting';
+import {expect} from 'chai';
+
+const {renderIntoDocument, scryRenderedDOMComponentsWithTag, Simulate}
+  = React.addons.TestUtils;
+
+describe('Voting', () => {
+
+  // ...
+
+  it('invokes callback when a button is clicked', () => {
+    let votedWith;
+    const vote = (entry) => votedWith = entry;
+
+    const component = renderIntoDocument(
+      <Voting pair={["Trainspotting", "28 Days Later"]}
+              vote={vote}/>
+    );
+    const buttons = scryRenderedDOMComponentsWithTag(component, 'button');
+    Simulate.click(buttons[0]);
+
+    expect(votedWith).to.equal('Trainspotting');
+  });
+
+});
+
+Getting this test to pass is simple enough. We just need an onClick handler on the buttons that
+invokes vote with the correct entry:
+
+src/components/Voting.jsx
+import React from 'react';
+
+export default React.createClass({
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  render: function() {
+    return <div className="voting">
+      {this.getPair().map(entry =>
+        <button key={entry}
+                onClick={() => this.props.vote(entry)}>
+          <h1>{entry}</h1>
+        </button>
+      )}
+    </div>;
+  }
+});
+
+This is generally how we'll manage user input and actions with pure components: The components don't
+try to do much about those actions themselves. They merely invoke callback props.
+
+Here we switched back to test-first development by writing the test first and the functionality
+second. I find it's often easier to initially test user input code from tests than through the
+browser. 
+
+In general, we'll be switching between the test-first and test-last workflows during UI development,
+based on whichever feels more useful at each step. 
+
+Once the user has already voted for a pair, we probably shouldn't let them vote again. While we could
+handle this internally in the component state, we're really trying to keep our components pure, so we
+should try to externalize that logic. The component could just take a hasVoted prop, for which we'll
+just hardcode a value for now:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Voting from './components/Voting';
+
+const pair = ['Trainspotting', '28 Days Later'];
+
+ReactDOM.render(
+  <Voting pair={pair} hasVoted="Trainspotting" />,
+  document.getElementById('app')
+);
+
+   
+
+We can make this work quite easily:
+
+src/components/Voting.jsx
+import React from 'react';
+
+export default React.createClass({
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  isDisabled: function() {
+    return !!this.props.hasVoted;
+  },
+  render: function() {
+    return <div className="voting">
+      {this.getPair().map(entry =>
+        <button key={entry}
+                disabled={this.isDisabled()}
+                onClick={() => this.props.vote(entry)}>
+          <h1>{entry}</h1>
+        </button>
+      )}
+    </div>;
+  }
+});
+
+Let's also add a little label to the button that the user has voted on, so that it is clear to them
+what has happened. The label should become visible for the button whose entry matches the hasVoted
+prop. We can make a new helper method hasVotedFor to decide whether to render the label or not:
+
+src/components/Voting.jsx
+import React from 'react';
+
+export default React.createClass({
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  isDisabled: function() {
+    return !!this.props.hasVoted;
+  },
+  hasVotedFor: function(entry) {
+    return this.props.hasVoted === entry;
+  },
+  render: function() {
+    return <div className="voting">
+      {this.getPair().map(entry =>
+        <button key={entry}
+                disabled={this.isDisabled()}
+                onClick={() => this.props.vote(entry)}>
+          <h1>{entry}</h1>
+          {this.hasVotedFor(entry) ?
+            <div className="label">Voted</div> :
+            null}
+        </button>
+      )}
+    </div>;
+  }
+});
+
+The final requirement for the voting screen is that once there is a winner, it will show just that,
+instead of trying to render any voting buttons. There might another prop for the winner. Again, we can
+simply hardcode a value for it temporarily until we have real data to plug in:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Voting from './components/Voting';
+
+const pair = ['Trainspotting', '28 Days Later'];
+
+ReactDOM.render(
+  <Voting pair={pair} winner="Trainspotting" />,
+  document.getElementById('app')
+);
+
+   
+
+We could handle this in the component by conditionally rendering a winner div or the buttons:
+
+src/components/Voting.jsx
+import React from 'react';
+
+export default React.createClass({
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  isDisabled: function() {
+    return !!this.props.hasVoted;
+  },
+  hasVotedFor: function(entry) {
+    return this.props.hasVoted === entry;
+  },
+  render: function() {
+    return <div className="voting">
+      {this.props.winner ?
+        <div ref="winner">Winner is {this.props.winner}!</div> :
+        this.getPair().map(entry =>
+          <button key={entry}
+                  disabled={this.isDisabled()}
+                  onClick={() => this.props.vote(entry)}>
+            <h1>{entry}</h1>
+            {this.hasVotedFor(entry) ?
+              <div className="label">Voted</div> :
+              null}
+          </button>
+        )}
+    </div>;
+  }
+});
+
+This is the functionality that we need, but the rendering code is now slightly messy. It might be
+better if we extract some separate components from this, so that the Voting screen component renders
+either a Winner component or a Vote component. Starting with the Winner component, it can just render
+a div:
+
+src/components/Winner.jsx
+import React from 'react';
+
+export default React.createClass({
+  render: function() {
+    return <div className="winner">
+      Winner is {this.props.winner}!
+    </div>;
+  }
+});
+
+The Vote component will be pretty much exactly like the Voting component was before - just concerned
+with the voting buttons:
+
+src/components/Vote.jsx
+import React from 'react';
+
+export default React.createClass({
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  isDisabled: function() {
+    return !!this.props.hasVoted;
+  },
+  hasVotedFor: function(entry) {
+    return this.props.hasVoted === entry;
+  },
+  render: function() {
+    return <div className="voting">
+      {this.getPair().map(entry =>
+        <button key={entry}
+                disabled={this.isDisabled()}
+                onClick={() => this.props.vote(entry)}>
+          <h1>{entry}</h1>
+          {this.hasVotedFor(entry) ?
+            <div className="label">Voted</div> :
+            null}
+        </button>
+      )}
+    </div>;
+  }
+});
+
+The Voting component itself now merely makes a decision about which of these two components to render:
+
+src/components/Voting.jsx
+import React from 'react';
+import Winner from './Winner';
+import Vote from './Vote';
+
+export default React.createClass({
+  render: function() {
+    return <div>
+      {this.props.winner ?
+        <Winner ref="winner" winner={this.props.winner} /> :
+        <Vote {...this.props} />}
+    </div>;
+  }
+});
+
+Notice that we added a ref for the Winner component. It's something we'll use in unit tests to grab
+the corresponding DOM node.
+
+That's our pure Voting component! Notice how we haven't really implemented any logic yet: There are
+buttons but we haven't specified what they do, except invoke a callback. Our components are concerned
+with rendering the UI and only that. The application logic will come in later, when we connect the UI
+to a Redux store.
+
+Before we move on though, time to writes some more unit tests for the new features we've added.
+Firstly, the presence of the hasVoted props should cause the voting buttons to become disabled:
+
+test/components/Voting_spec.jsx
+it('disables buttons when user has voted', () => {
+  const component = renderIntoDocument(
+    <Voting pair={["Trainspotting", "28 Days Later"]}
+            hasVoted="Trainspotting" />
+  );
+  const buttons = scryRenderedDOMComponentsWithTag(component, 'button');
+
+  expect(buttons.length).to.equal(2);
+  expect(buttons[0].hasAttribute('disabled')).to.equal(true);
+  expect(buttons[1].hasAttribute('disabled')).to.equal(true);
+});
+
+A 'Voted' label should be present on the button whose entry matches the value of hasVoted:
+
+test/components/Voting_spec.jsx
+it('adds label to the voted entry', () => {
+  const component = renderIntoDocument(
+    <Voting pair={["Trainspotting", "28 Days Later"]}
+            hasVoted="Trainspotting" />
+  );
+  const buttons = scryRenderedDOMComponentsWithTag(component, 'button');
+
+  expect(buttons[0].textContent).to.contain('Voted');
+});
+
+When there's a winner, there should be no buttons, but instead an element with the winner ref:
+
+test/components/Voting_spec.jsx
+it('renders just the winner when there is one', () => {
+  const component = renderIntoDocument(
+    <Voting winner="Trainspotting" />
+  );
+  const buttons = scryRenderedDOMComponentsWithTag(component, 'button');
+  expect(buttons.length).to.equal(0);
+
+  const winner = React.findDOMNode(component.refs.winner);
+  expect(winner).to.be.ok;
+  expect(winner.textContent).to.contain('Trainspotting');
+});
+
+We could also have written unit tests for each component separately, but I find it more appropriate in
+this case to treat the Voting screen as the "unit" to test. We test the component's external behavior,
+and the fact that it uses smaller components internally is an implementation detail. 
+
+** Immutable Data And Pure Rendering 
+** Writing The UI for The Results Screen And Handling Routing 
+** Introducing A Client-Side Redux Store 
+** Getting Data In from Redux to React 
+** Setting Up The Socket.io Client 
+** Receiving Actions From The Server 
+** Dispatching Actions From React Components 
+** Sending Actions To The Server Using Redux Middleware 
+
+* Exercises 
+
+** 1. Invalid Vote Prevention 
+** 2. Improved Vote State Reset 
+** 3. Duplicate Vote Prevention 
+** 4. Restarting The Vote 
+** 5. Indicating Socket Connection State 
+** Bonus Challenge: Going Peer to Peer 
+*** Loading Entries 
+*** Starting The Vote 
+*** Voting 
+*** Moving to The Next Pair 
+*** Ending The Vote 
+
+** Introducing Actions and Reducers 
+** A Taste of Reducer Composition 
+** Introducing The Redux Store 
+** Setting Up a Socket.io Server 
+** Broadcasting State from A Redux Listener 
+** Receiving Remote Redux Actions 
+
+* The Client Application 
+** Client Project Setup 
+*** Unit Testing support 
+** React and react-hot-loader 
+** Writing The UI for The Voting Screen 
+** Immutable Data And Pure Rendering 
+** Writing The UI for The Results Screen And Handling Routing 
+** Introducing A Client-Side Redux Store 
+** Getting Data In from Redux to React 
+** Setting Up The Socket.io Client 
+** Receiving Actions From The Server 
+** Dispatching Actions From React Components 
+** Sending Actions To The Server Using Redux Middleware 
+* Exercises 
+** 1. Invalid Vote Prevention 
+** 2. Improved Vote State Reset 
+** 3. Duplicate Vote Prevention 
+** 4. Restarting The Vote 
+** 5. Indicating Socket Connection State 
+** Bonus Challenge: Going Peer to Peer 
+ 
