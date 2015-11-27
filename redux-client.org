@@ -2473,6 +2473,28 @@ export default React.createClass({
   }
 });
 
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+
+
+  2 passing (63ms)
+
+#+end_example
+
+
 This is generally how we'll manage user input and actions with pure components: The components don't
 try to do much about those actions themselves. They merely invoke callback props.
 
