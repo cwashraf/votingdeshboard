@@ -1,5 +1,5 @@
 #+SEQ_TODO: TODAY TOMORROW TEST DONE
-* TODAY What You Will Need
+* DONE What You Will Need
 #+BEGIN: clocktable :maxlevel 4 :scope subtree
 #+CAPTION: Clock summary at [2015-11-24 মঙ্গল 21:33]
 | Headline                 | Time   |
@@ -1849,10 +1849,7 @@ store.dispatch({type: 'NEXT'});
 And with that, we're ready to switch our focus to the client application.
 
 * The Client Application 
-  CLOCK: [2015-11-26 বৃহঃ 13:08]
-  :PROPERTIES:
-  :Effort:   0:40
-  :END:
+** Introduction 
 During the remainder of this tutorial we'll be writing a React application that
 connects to the server we now have and makes the voting system come alive to
 users.
@@ -1862,11 +1859,8 @@ use case for Redux: As the underlying engine of a React application. We've
 already seen how Redux itself works, and soon we'll learn exactly how it fits
 together with React and how using it influences the design of React apps.
 
-** Client Project Setup 
-   CLOCK: [2015-11-26 বৃহঃ 13:27]
-   :PROPERTIES:
-   :Effort:   0:12
-   :END:
+** DONE Client Project Setup 
+*** Introduction
 The very first thing we're going to do is start a fresh NPM project, just like
 we did with the server.
 
@@ -2168,7 +2162,7 @@ package.json
   "test:watch": "npm run test -- --watch"
 },
 
-** React and react-hot-loader
+*** React and react-hot-loader
 
 With the Webpack and Babel infrastructure in place, let's talk about React!
 
@@ -2268,9 +2262,12 @@ addition to Babel.
 If you now start or restart the development server, you should see a message about Hot Module
 Replacement being enabled in the console. We're good to go ahead with writing our first component.
 
-** Writing The UI for The Voting Screen 
+*** Writing The UI for The Voting Screen 
+    CLOCK: [2015-11-27 Fri 04:10]--[2015-11-27 Fri 06:05] =>  1:55
 
-The voting screen of the application will be quite simple: While voting is ongoing, it'll always
+**** The voting screen
+***** Introduction
+The application will be quite simple: While voting is ongoing, it'll always
 display two buttons - one for each of the entries being voted on. When the vote is over, it'll display
 the winner.
 
@@ -2295,11 +2292,7 @@ ReactDOM.render(
   document.getElementById('app')
 );
 
-   
-
-The Voting component takes the current pair of entries as props. For now we can just hardcode that
-pair, and later we'll substitute it with real data. The component itself is pure and doesn't care
-where the data comes from.
+****** changle entrypoint
 
 The entrypoint filename must also be changed in webpack.config.js:
 
@@ -2312,6 +2305,13 @@ entry: [
 
 If you start (or restart) webpack-dev-server now, you'll see it complain about the missing Voting
 component. Let's fix that by writing our first version of it:
+   
+
+**** The Voting component 
+takes the current pair of entries as props. For now we can just hardcode that
+pair, and later we'll substitute it with real data. The component itself is pure and doesn't care
+where the data comes from.
+
 
 src/components/Voting.jsx
 import React from 'react';
@@ -2338,7 +2338,9 @@ restarts, no page reloads. Talk about fast feedback!
 If you don't see what you expect, check the webpack-dev-server output as well as the console log in
 your browser's development tools for problems. 
 
-Now we can add our first unit test as well, for the functionality that we've got. It'll go in a file
+**** Now we can add our first unit test as well
+***** Introduction
+for the functionality that we've got. It'll go in a file
 called Voting_spec.jsx:
 
 test/components/Voting_spec.jsx
@@ -2347,6 +2349,8 @@ import Voting from '../../src/components/Voting';
 describe('Voting', () => {
 
 });
+
+***** renderIntoDocument
 
 To test that the component renders those buttons based on the pair prop, we should render it and see
 what the output was. To render a component in a unit test, we can use a helper function called
@@ -2368,6 +2372,7 @@ describe('Voting', () => {
 
 });
 
+***** scryRenderedDOMComponentsWithTag
 Once the component is rendered, we can use another React helper function called
 scryRenderedDOMComponentsWithTag to find the button elements we expect there to be. We expect two of
 them, and we expect their text contents to be the two entries, respectively:
@@ -2396,6 +2401,7 @@ describe('Voting', () => {
 });
 
 If you run the test now, you should see it pass:
+***** Test: renders a pair of buttons
 #+BEGIN_SRC sh :results verbatim
 npm run test
 #+END_SRC
@@ -2416,8 +2422,8 @@ npm run test
 
 #+end_example
 
-
-When one of those voting buttons is clicked, the component should invoke a callback function. Like the
+***** Simulating
+the component should invoke a callback function. Like the
 entry pair, the callback function should also be given to the component as a prop.
 
 Let's go ahead and add a unit test for this too. We can test this by simulating a click using the
@@ -2451,6 +2457,7 @@ describe('Voting', () => {
 
 });
 
+***** Onclick handler
 Getting this test to pass is simple enough. We just need an onClick handler on the buttons that
 invokes vote with the correct entry:
 
@@ -2505,7 +2512,8 @@ browser.
 In general, we'll be switching between the test-first and test-last workflows during UI development,
 based on whichever feels more useful at each step. 
 
-Once the user has already voted for a pair, we probably shouldn't let them vote again. While we could
+**** Once the user has already voted for a pair
+     we probably shouldn't let them vote again. While we could
 handle this internally in the component state, we're really trying to keep our components pure, so we
 should try to externalize that logic. The component could just take a hasVoted prop, for which we'll
 just hardcode a value for now:
@@ -2549,7 +2557,8 @@ export default React.createClass({
   }
 });
 
-Let's also add a little label to the button that the user has voted on, so that it is clear to them
+***** Let's also add a little label to the button 
+that the user has voted on, so that it is clear to them
 what has happened. The label should become visible for the button whose entry matches the hasVoted
 prop. We can make a new helper method hasVotedFor to decide whether to render the label or not:
 
@@ -2582,7 +2591,9 @@ export default React.createClass({
   }
 });
 
-The final requirement for the voting screen is that once there is a winner, it will show just that,
+**** Winners 
+***** The final requirement 
+for the voting screen is that once there is a winner, it will show just that,
 instead of trying to render any voting buttons. There might another prop for the winner. Again, we can
 simply hardcode a value for it temporarily until we have real data to plug in:
 
@@ -2600,7 +2611,7 @@ ReactDOM.render(
 
    
 
-We could handle this in the component by conditionally rendering a winner div or the buttons:
+***** We could handle this in the component by conditionally rendering a winner div or the buttons:
 
 src/components/Voting.jsx
 import React from 'react';
@@ -2633,6 +2644,7 @@ export default React.createClass({
   }
 });
 
+***** Winner component
 This is the functionality that we need, but the rendering code is now slightly messy. It might be
 better if we extract some separate components from this, so that the Voting screen component renders
 either a Winner component or a Vote component. Starting with the Winner component, it can just render
@@ -2698,8 +2710,8 @@ export default React.createClass({
   }
 });
 
-Notice that we added a ref for the Winner component. It's something we'll use in unit tests to grab
-the corresponding DOM node.
+****** Notice that we added a ref for the Winner component. 
+It's something we'll use in unit tests to grab the corresponding DOM node.
 
 That's our pure Voting component! Notice how we haven't really implemented any logic yet: There are
 buttons but we haven't specified what they do, except invoke a callback. Our components are concerned
@@ -2709,6 +2721,8 @@ to a Redux store.
 Before we move on though, time to writes some more unit tests for the new features we've added.
 Firstly, the presence of the hasVoted props should cause the voting buttons to become disabled:
 
+**** Testing HasVoted 
+    CLOCK: [2015-11-27 Fri 02:47]--[2015-11-27 Fri 03:36] =>  0:49
 test/components/Voting_spec.jsx
 it('disables buttons when user has voted', () => {
   const component = renderIntoDocument(
@@ -2730,10 +2744,35 @@ it('adds label to the voted entry', () => {
     <Voting pair={["Trainspotting", "28 Days Later"]}
             hasVoted="Trainspotting" />
   );
-  const buttons = scryRenderedDOMComponentsWithTag(component, 'button');
+  const buttons = scryRenderedDOMComponentsWithTag(component, 'buttons');
 
   expect(buttons[0].textContent).to.contain('Voted');
 });
+
+#+BEGIN_SRC sh :results verbatim
+npm run test 
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+    ✓ disable buttons when user has voted
+    ✓ adds label to the voted entry
+
+
+  4 passing (104ms)
+
+#+end_example
+
+**** Testing Winner
 
 When there's a winner, there should be no buttons, but instead an element with the winner ref:
 
@@ -2754,14 +2793,2078 @@ We could also have written unit tests for each component separately, but I find 
 this case to treat the Voting screen as the "unit" to test. We test the component's external behavior,
 and the fact that it uses smaller components internally is an implementation detail. 
 
-** Immutable Data And Pure Rendering 
-** Writing The UI for The Results Screen And Handling Routing 
-** Introducing A Client-Side Redux Store 
-** Getting Data In from Redux to React 
+** DONE Immutable Data And Pure Rendering 
+   CLOCK: [2015-11-27 Fri 06:37]--[2015-11-27 Fri 06:47] =>  0:10
+   :PROPERTIES:
+   :Effort:   0:05
+   :END:
+*** Introduction
+We have discussed the virtues of using immutable data, but there's one additional, very practical
+benefit that we get when using it together with React: If we only use immutable data in component
+props, and write the component as a pure component, we can have React use a more efficient strategy
+for detecting changes in the props.
+
+*** Testing PureRenderMixin
+    CLOCK: [2015-11-27 Fri 06:59]--[2015-11-27 Fri 07:27] =>  0:28
+    CLOCK: [2015-11-27 Fri 06:48]--[2015-11-27 Fri 06:58] =>  0:10
+    :PROPERTIES:
+    :Effort:   0:15
+    :END:
+    
+**** Introduction
+This is done by applying the PureRenderMixin that is available as an add-on package. When this mixin
+is added to a component, it changes the way React checks for changes in the component's props (and
+state). Instead of a deep compare it does a shallow compare, which is much, much faster.
+
+The reason we can do this is that by definition, there can never be changes within immutable data
+structures. If the props of a component are all immutable values, and the props keep pointing to the
+same values between renders, there can be no reason to re-render the component, and it can be skipped
+completely!
+
+**** Test for mutable data
+
+We can concretely see what this is about by writing some unit tests. Our component is supposed to be
+pure, so if we did give it a mutable array, and then caused a mutation inside the array, it should not
+be re-rendered:
+
+test/components/Voting_spec.jsx
+it('renders as a pure component', () => {
+  const pair = ['Trainspotting', '28 Days Later'];
+  const component = renderIntoDocument(
+    <Voting pair={pair} />
+  );
+
+  let firstButton = scryRenderedDOMComponentsWithTag(component, 'button')[0];
+  expect(firstButton.textContent).to.equal('Trainspotting');
+
+  pair[0] = 'Sunshine';
+  component.setProps({pair: pair});
+  firstButton = scryRenderedDOMComponentsWithTag(component, 'button')[0];
+  expect(firstButton.textContent).to.equal('Trainspotting');
+});
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+
+**** test case for immutable data pair
+We should have to explicitly set a new immutable list in the props to have the change reflected in the
+UI:
+
+test/components/Voting_spec.jsx
+import React from 'react/addons';
+import {List} from 'immutable';
+import Voting from '../../src/components/Voting';
+import {expect} from 'chai';
+
+const {renderIntoDocument, scryRenderedDOMComponentsWithTag, Simulate}
+  = React.addons.TestUtils;
+
+describe('Voting', () => {
+
+  // ...
+
+  it('does update DOM when prop changes', () => {
+    const pair = List.of('Trainspotting', '28 Days Later');
+    const component = renderIntoDocument(
+      <Voting pair={pair} />
+    );
+
+    let firstButton = scryRenderedDOMComponentsWithTag(component, 'button')[0];
+    expect(firstButton.textContent).to.equal('Trainspotting');
+
+    const newPair = pair.set(0, 'Sunshine');
+    component.setProps({pair: newPair});
+    firstButton = scryRenderedDOMComponentsWithTag(component, 'button')[0];
+    expect(firstButton.textContent).to.equal('Sunshine');
+  });
+
+});
+
+I wouldn't usually bother writing tests like this one, and would just assume that PureRenderMixin is
+being used. In this case the tests just happen to help us understand what exactly is going on. 
+
+Running the tests at this point will show how the component is not currently behaving as we expect:
+It'll update the UI in both cases, which means it is doing deep checks within the props, 
+which is what we wanted to avoid since we're going to be using immutable data.
+
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+
+**** PureRenderMixin in React addons
+Everything falls into place when we enable the pure render mixin in our components. We need to install
+its package first:
+#+BEGIN_SRC sh
+npm install --save react-addons-pure-render-mixin
+#+END_SRC
+
+#+RESULTS:
+: react-addons-pure-render-mixin@0.14.3 node_modules/react-addons-pure-render-mixin
+
+
+If we now mix it into our components, tests start passing and we're done:
+
+src/components/Voting.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import Winner from './Winner';
+import Vote from './Vote';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  // ...
+});
+src/components/Vote.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  // ...
+});
+src/components/Winner.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  // ...
+});
+
+Strictly speaking, the tests would start to pass if we only enabled the pure render mixin for Voting
+and didn't bother with the two other components. That's because when React doesn't notice any changes
+in the Voting props, it skips re-rendering for the whole component subtree. 
+
+However, I find it more appropriate to consistently use the pure render mixin in all my components,
+both to make it explicit that the components are pure, and to make sure they will behave as I expect
+even after I rearrange them. 
+#+BEGIN_SRC sh :results verbatim
+npm run test 
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+    ✓ disable buttons when user has voted
+    ✓ adds label to the voted entry
+    ✓ renders just the winner when there is one
+    ✓ renders as a pure component
+    ✓ does update DOM when prop changes (54ms)
+
+
+  7 passing (209ms)
+
+#+end_example
+
+** DONE Writing The UI for The Results Screen And Handling Routing 
+   CLOCK: [2015-11-27 Fri 07:48]--[2015-11-27 Fri 08:22] =>  0:34
+   CLOCK: [2015-11-27 Fri 07:31]--[2015-11-27 Fri 07:34] =>  0:03
+   :PROPERTIES:
+   :Effort:   0:06
+   :END:
+*** Voting Screen
+With that Voting screen all done, let's move on to the other main screen of the app: The one where
+results will be shown.
+The data displayed here is the same pair of entries as in the voting screen, and the tally of votes
+for each. Additionally, there's a little button on the bottom with which the person managing the vote
+can move on to the next pair.
+*** Result Screen
+What we have here are two separate screens, exactly one of which should be shown at any given time. To
+choose between the two, using URL paths might be a good idea: We could set the root path #/ to show
+the voting screen, and a #/results path to show the results screen.
+*** Router 
+    CLOCK: [2015-11-27 Fri 08:24]--[2015-11-27 Fri 08:42] =>  0:18
+    :PROPERTIES:
+    :Effort:   0:13
+    :END:
+
+**** DONE Install
+     That kind of thing can easily be done with the react-router library, with which we can associate
+different components to different paths. Let's add it to the project:
+#+BEGIN_SRC sh
+npm install --save react-router@1.0.0-rc3
+#+END_SRC
+
+#+RESULTS:
+**** TEST Adding Voting route 
+We can now configure our route paths. The Router comes with a React component called Route, which can
+be used to declaratively define a routing table. For now, we'll have just one route:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import {Route} from 'react-router';
+import App from './components/App';
+import Voting from './components/Voting';
+
+const pair = ['Trainspotting', '28 Days Later'];
+
+const routes = <Route component={App}>
+  <Route path="/" component={Voting} />
+</Route>;
+
+ReactDOM.render(
+  <Voting pair={pair} />,
+  document.getElementById('app')
+);
+
+   
+
+We have a single route that we have configured to point to the Voting component. The other thing we've
+done here is define a component for the root Route in the configuration, which will be shared for all
+the concrete routes within. It's pointing to an App component, which we'll soon create.
+
+**** TEST Root Component  
+The purpose of the root route component is to render all the markup that is common across all routes.
+Here's what our root component App should look like:
+
+src/components/App.jsx
+import React from 'react';
+import {List} from 'immutable';
+
+const pair = List.of('Trainspotting', '28 Days Later');
+
+export default React.createClass({
+  render: function() {
+    return React.cloneElement(this.props.children, {pair: pair});
+  }
+});
+
+   
+
+This component does nothing except render its child components, expected to be given in as the
+children prop. This is something that the react-router package does for us. It plugs in the component
+(s) defined for whatever the current route happens to be. Since we currently just have the one route
+for Voting, at the moment this component always renders Voting.
+**** TEST CloneElement API
+Notice that we've moved the placeholder pair data from index.jsx to App.jsx. We use React's
+cloneElement API to create a clone of the original components with our custom pair prop attached. This
+is just a temporary measure, and we'll be able to remove the cloning call later. 
+
+Earlier we discussed how *it's generally a good idea to use the pure render mixin across all*
+*components. The App component is an exception to this rule.* The reason is that it would cause route
+changes not to fire, because of an implementation issue between the router and React itself. This
+situation may well change in the near future.
+**** TEST Kickstart the Router
+We can now switch back to index.js where we can kickstart the Router itself, and have it initialize
+our application:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import App from './components/App';
+import Voting from './components/Voting';
+
+const routes = <Route component={App}>
+  <Route path="/" component={Voting} />
+</Route>;
+
+ReactDOM.render(
+  <Router>{routes}</Router>,
+  document.getElementById('app')
+);
+
+We now supply the Router component from the react-router package as the root component of our
+application. We plug our route table into it by passing it in as a child component.
+
+
+With this, we've restored the previous functionality of our app: It just renders the Voting component.
+But this time it is done with the React router baked in, which means we can now easily add more
+routes.
+*** Implemantation of results screen
+***** TEST Initilization
+      CLOCK: [2015-11-27 Fri 08:42]--[2015-11-27 Fri 08:46] =>  0:04
+      :PROPERTIES:
+      :Effort:   0:15
+      :END:
+This will be served by a new component called Results:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import App from './components/App';
+import Voting from './components/Voting';
+import Results from './components/Results';
+
+const routes = <Route component={App}>
+  <Route path="/results" component={Results} />
+  <Route path="/" component={Voting} />
+</Route>;
+
+ReactDOM.render(
+  <Router>{routes}</Router>,
+  document.getElementById('app')
+);
+
+Here we use the <Route> component again to specify that for a path named "/results", the Results
+component should be used. Everything else will still be handled by Voting.
+***** TEST Simple implementation of Results
+      CLOCK: [2015-11-27 Fri 09:12]--[2015-11-27 Fri 09:19] =>  0:07
+      :PROPERTIES:
+      :Effort:   0:02
+      :ORDERED:  t
+      :END:
+
+Let's make a simple implementation of Results so that we can see how the routing works:
+
+src/components/Results.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  render: function() {
+    return <div>Hello from results!</div>
+  }
+});
+
+If you now point your browser to http://localhost:8080/#/results, you should see the little message
+from the Results component. The root path, on the other hand, should show the voting buttons. You can
+also use the back and forward buttons to switch between the routes, and the visible component is
+switched while the application remains alive. That's the router in action!
+
+This is all we're going to do with the React Router in this application. The library is capable of a
+lot more though. Take a look at its documentation to find out about all the things you can do with it.
+***** TEST Implemantation of Results component
+      CLOCK: [2015-11-27 Fri 09:21]--[2015-11-27 Fri 09:26] =>  0:05
+      :PROPERTIES:
+      :Effort:   0:05
+      :END:
+
+Now that we have a placeholder Results component, let's go right ahead and make it do something
+useful. It should display the same two entries currently being voted on that the Voting component
+does:
+
+src/components/Results.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  render: function() {
+    return <div className="results">
+      {this.getPair().map(entry =>
+        <div key={entry} className="entry">
+          <h1>{entry}</h1>
+        </div>
+      )}
+    </div>;
+  }
+  });
+***** TEST Add Tally
+      CLOCK: [2015-11-26 Thu 09:30]--[2015-11-26 Thu 11:30] =>  2:00
+      :PROPERTIES:
+      :Effort:   0:15
+      :END:      
+
+Since this is the results screen, it should also actually show the tally of votes. That's what people
+want to see when they're on this screen. Let's pass in a placeholder tally Map to the component from
+our root App component first:
+
+src/components/App.jsx
+import React from 'react';
+import {List, Map} from 'immutable';
+
+const pair = List.of('Trainspotting', '28 Days Later');
+const tally = Map({'Trainspotting': 5, '28 Days Later': 4});
+
+export default React.createClass({
+  render: function() {
+    return React.cloneElement(this.props.children, {
+      pair: pair,
+      tally: tally
+    });
+  }
+});
+
+Now we can tweak the Results component to show those numbers:
+
+src/components/Results.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  getVotes: function(entry) {
+    if (this.props.tally && this.props.tally.has(entry)) {
+      return this.props.tally.get(entry);
+    }
+    return 0;
+  },
+  render: function() {
+    return <div className="results">
+      {this.getPair().map(entry =>
+        <div key={entry} className="entry">
+          <h1>{entry}</h1>
+          <div className="voteCount">
+            {this.getVotes(entry)}
+          </div>
+        </div>
+      )}
+    </div>;
+  }
+});
+
+At this point, let's switch gears and add a unit test for the current behavior of the Results
+component to make sure we won't break it later.
+**** UNIT Testing for Voting Result
+We expect the component to render a div for each entry, and display both the entry name and the number
+of votes within that div. For entries that have no votes, a vote count of zero should be shown:
+
+test/components/Results_spec.jsx
+import React from 'react/addons';
+import {List, Map} from 'immutable';
+import Results from '../../src/components/Results';
+import {expect} from 'chai';
+
+const {renderIntoDocument, scryRenderedDOMComponentsWithClass}
+  = React.addons.TestUtils;
+
+describe('Results', () => {
+
+  it('renders entries with vote counts or zero', () => {
+    const pair = List.of('Trainspotting', '28 Days Later');
+    const tally = Map({'Trainspotting': 5});
+    const component = renderIntoDocument(
+      <Results pair={pair} tally={tally} />
+    );
+    const entries = scryRenderedDOMComponentsWithClass(component, 'entry');
+    const [train, days] = entries.map(e => e.textContent);
+
+    expect(entries.length).to.equal(2);
+    expect(train).to.contain('Trainspotting');
+    expect(train).to.contain('5');
+    expect(days).to.contain('28 Days Later');
+    expect(days).to.contain('0');
+  });
+
+});
+
+**** Next button of the Result
+***** Test case 
+Next, let's talk about the "Next" button, which is used to move the voting to the next entry.
+
+From the component's point of view, there should just be a callback function in the props. The
+component should invoke that callback when the "Next" button inside it is clicked. We can formulate a
+unit test for this, which is quite similar to the ones we made for the voting buttons:
+
+test/components/Results_spec.jsx
+import React from 'react/addons';
+import {List, Map} from 'immutable';
+import Results from '../../src/components/Results';
+import {expect} from 'chai';
+
+const {renderIntoDocument, scryRenderedDOMComponentsWithClass, Simulate}
+  = React.addons.TestUtils;
+
+describe('Results', () => {
+
+  // ...
+
+  it('invokes the next callback when next button is clicked', () => {
+    let nextInvoked = false;
+    const next = () => nextInvoked = true;
+
+    const pair = List.of('Trainspotting', '28 Days Later');
+    const component = renderIntoDocument(
+      <Results pair={pair}
+               tally={Map()}
+               next={next}/>
+    );
+    Simulate.click(React.findDOMNode(component.refs.next));
+
+    expect(nextInvoked).to.equal(true);
+  });
+
+});
+***** Implemantation
+The implementation is also similar to the voting buttons. It is just slightly simpler, as there are no
+arguments to pass:
+
+src/components/Results.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  getVotes: function(entry) {
+    if (this.props.tally && this.props.tally.has(entry)) {
+      return this.props.tally.get(entry);
+    }
+    return 0;
+  },
+  render: function() {
+    return <div className="results">
+      <div className="tally">
+        {this.getPair().map(entry =>
+          <div key={entry} className="entry">
+            <h1>{entry}</h1>
+            <div class="voteCount">
+              {this.getVotes(entry)}
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="management">
+        <button ref="next"
+                className="next"
+                onClick={this.props.next}>
+          Next
+        </button>
+      </div>
+    </div>;
+  }
+});
+**** Winner screen in result 
+***** Unit Test 
+Finally, just like the Voting screen, the Results screen should display the winner once we have one:
+
+test/components/Results_spec.jsx
+it('renders the winner when there is one', () => {
+  const component = renderIntoDocument(
+    <Results winner="Trainspotting"
+             pair={["Trainspotting", "28 Days Later"]}
+             tally={Map()} />
+  );
+  const winner = React.findDOMNode(component.refs.winner);
+  expect(winner).to.be.ok;
+  expect(winner.textContent).to.contain('Trainspotting');
+});
+***** Source 
+We can implement this by simply reusing the Winner component we already developed for the Voting
+screen. If there's a winner, we render it instead of the regular Results screen:
+
+src/components/Results.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import Winner from './Winner';
+
+export default React.createClass({
+  mixins: [PureRenderMixin],
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  getVotes: function(entry) {
+    if (this.props.tally && this.props.tally.has(entry)) {
+      return this.props.tally.get(entry);
+    }
+    return 0;
+  },
+  render: function() {
+    return this.props.winner ?
+      <Winner ref="winner" winner={this.props.winner} /> :
+      <div className="results">
+        <div className="tally">
+          {this.getPair().map(entry =>
+            <div key={entry} className="entry">
+              <h1>{entry}</h1>
+              <div className="voteCount">
+                {this.getVotes(entry)}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="management">
+          <button ref="next"
+                   className="next"
+                   onClick={this.props.next}>
+            Next
+          </button>
+        </div>
+      </div>;
+  }
+});
+
+This component would also benefit from being broken down into smaller ones. Perhaps a Tally component
+for displaying the pair of entries. Go ahead and do the refactoring if you feel like it! 
+
+And that's pretty much what our simple application will need in terms of UI! The components we've
+written don't yet do anything because they're not connected to any real data or actions. It is
+remarkable, however, just how far we're able to get without needing any of that. We have been able to
+just inject some simple placeholder data to these components and concentrate on the structure of the
+UI.
+
+Now that we do have the UI though, let's talk about how to make it come alive by connecting its inputs
+and outputs to a Redux store.
+
+** TEST Introducing A Client-Side Redux Store 
+   CLOCK: [2015-11-27 Fri 12:58]--[2015-11-27 Fri 13:35] =>  0:37
+*** DONE Introduction
+Redux is really designed to be used as the state container for UI applications, exactly like the one
+we are in the process of building. We've only used Redux on the server so far though, and discovered
+it's actually pretty useful there too! Now we're ready to look at how Redux works with a React
+application, which is arguably where it's most commonly used.
+
+Just like on the server, we'll begin by thinking about the state of the application. That state is
+going to be quite similar to the one on the server, which is not by accident.
+
+We have a UI with two screens. On both of them we display the pair of entries that's being voted on.
+It would make sense to have a state which included a vote entry with such a pair:
+
+In addition to this, the results screen displays the current tally of votes. That should also be in
+the vote state:
+
+*** DONE State
+**** Voted
+The Voting component renders differently when the user has already voted in the current pair. This is
+something that the state also needs to track:
+
+**** Winner 
+
+When there is a winner, we need that and only that in the state:
+
+**** hasVoted client side state  
+
+Notice that everything in here is a subset of the server state, except for the hasVoted entry.
+
+*** DONE Implemantation Details 
+This brings us to the implementation of the core logic and the actions and reducers that our Redux
+Store will use. What should they be?
+
+**** DONE User Actions
+We can think about this in terms of what can happen while the application is running that could cause
+the state to change. One source of state changes are the user's actions. We currently have two
+possible user interactions built into the UI:
+
+***** The user clicks one of the vote buttons on the voting screen. 
+***** The user click on the Next button on the results screen. 
+***** Server send us it's current state
+Additionally, we know that our server is set up to send us its current state. We will soon be writing
+the code for receiving it. That is a third source of state change.
+****** Merge the server state
+We can begin with the server state update, since that is going to be the most straightforward one to
+do. Earlier we set the server up to emit a state event, whose payload is almost exactly the shape of
+the client-side state trees that we have drawn. This is no coincidence since that's how we designed
+it. From the point of view of our client's reducer, it would make sense to have an action that
+receives the state snapshot from the server and just merges it into the client state. The action would
+look something like this:
+
+{
+  type: 'SET_STATE',
+  state: {
+    vote: {...}
+  }
+}
+**** DONE  implemantioan Redux to client
+***** DONE Test SET_STATE
+      CLOCK: [2015-11-27 Fri 13:37]--[2015-11-27 Fri 13:46] =>  0:09
+
+Let's add some unit tests to see how this might work out. We're expecting to have a reducer that,
+given an action like the one above, merges its payload into the current state:
+
+test/reducer_spec.js
+import {List, Map, fromJS} from 'immutable';
+import {expect} from 'chai';
+
+import reducer from '../src/reducer';
+
+describe('reducer', () => {
+
+  it('handles SET_STATE', () => {
+    const initialState = Map();
+    const action = {
+      type: 'SET_STATE',
+      state: Map({
+        vote: Map({
+          pair: List.of('Trainspotting', '28 Days Later'),
+          tally: Map({Trainspotting: 1})
+        })
+      })
+    };
+    const nextState = reducer(initialState, action);
+
+    expect(nextState).to.equal(fromJS({
+      vote: {
+        pair: ['Trainspotting', '28 Days Later'],
+        tally: {Trainspotting: 1}
+      }
+    }));
+  });
+
+});
+
+***** DONE immutable data structure by the time it is returned as the next value:
+      CLOCK: [2015-11-27 Fri 13:47]--[2015-11-27 Fri 13:52] =>  0:05
+      :PROPERTIES:
+      :Effort:   8
+      :ORDERED:  t
+      :END:
+
+The reducers should be able to receive plain JavaScript data structure, as opposed to an Immutable
+data structure, since that's what actually get from the socket. It should still be turned into an
+immutable data structure by the time it is returned as the next value:
+
+test/reducer_spec.js
+it('handles SET_STATE with plain JS payload', () => {
+  const initialState = Map();
+  const action = {
+    type: 'SET_STATE',
+    state: {
+      vote: {
+        pair: ['Trainspotting', '28 Days Later'],
+        tally: {Trainspotting: 1}
+      }
+    }
+  };
+  const nextState = reducer(initialState, action);
+
+  expect(nextState).to.equal(fromJS({
+    vote: {
+      pair: ['Trainspotting', '28 Days Later'],
+      tally: {Trainspotting: 1}
+    }
+  }));
+});
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Results
+    ✓ renders entries with vote counts or zero (38ms)
+    ✓ invokes the next callback when next button is clicked
+    ✓ renders the winner when there is one
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+    ✓ disable buttons when user has voted
+    ✓ adds label to the voted entry
+    ✓ renders just the winner when there is one
+    ✓ renders as a pure component
+    ✓ does update DOM when prop changes
+
+  reducer
+    ✓ handles SET_STATE
+    ✓ handles SET_STATE with plain JS payload
+
+  12 passing (214ms)
+
+#+end_example
+
+***** DONE Handle undifined initial state
+As part of the reducer contract, an undefined initial state should also be correctly initialized into
+an Immutable data structure by the reducer:
+
+test/reducer_spec.js
+it('handles SET_STATE without initial state', () => {
+  const action = {
+    type: 'SET_STATE',
+    state: {
+      vote: {
+        pair: ['Trainspotting', '28 Days Later'],
+        tally: {Trainspotting: 1}
+      }
+    }
+  };
+  const nextState = reducer(undefined, action);
+
+  expect(nextState).to.equal(fromJS({
+    vote: {
+      pair: ['Trainspotting', '28 Days Later'],
+      tally: {Trainspotting: 1}
+    }
+  }));
+});
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Results
+    ✓ renders entries with vote counts or zero (43ms)
+    ✓ invokes the next callback when next button is clicked
+    ✓ renders the winner when there is one
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+    ✓ disable buttons when user has voted
+    ✓ adds label to the voted entry
+    ✓ renders just the winner when there is one
+    ✓ renders as a pure component
+    ✓ does update DOM when prop changes
+
+  reducer
+    ✓ handles SET_STATE
+    ✓ handles SET_STATE with plain JS payload
+    ✓ handles SET_STATE without initial state
+
+
+  13 passing (186ms)
+
+#+end_example
+
+***** DONE Implemanting client side Reducer
+That's our spec. Let's see how to fulfill it. We should have a reducer function exported by the
+reducer module:
+
+src/reducer.js
+import {Map} from 'immutable';
+
+export default function(state = Map(), action) {
+
+  return state;
+}
+***** DONE SET_STATE
+The reducer should handle the SET_STATE action. In its handler function we can actually just merge the
+given new state to the old state, using the merge function from Map. That makes our tests pass!
+
+src/reducer.js
+import {Map} from 'immutable';
+
+function setState(state, newState) {
+  return state.merge(newState);
+}
+
+export default function(state = Map(), action) {
+  switch (action.type) {
+  case 'SET_STATE':
+    return setState(state, action.state);
+  }
+  return state;
+}
+
+Notice that here we are not bothering with a "core" module separated from the reducer module. That's
+because the logic in our reducer is so simple that it doesn't really warrant one. We're just doing a
+merge, whereas on the server we have our whole voting system's logic in there. It might later be more
+appropriate to add some separation of concerns in the client as well, if the need arises. 
+
+The two remaining causes for state change are the user actions: Voting and clicking "Next". Since
+these are both actions that involve server interaction, we'll return to them a bit later, after we've
+got the architecture for server communication in place.
+#+BEGIN_SRC sh :results verbatim 
+npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Results
+    ✓ renders entries with vote counts or zero (39ms)
+    ✓ invokes the next callback when next button is clicked
+    ✓ renders the winner when there is one
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+    ✓ disable buttons when user has voted
+    ✓ adds label to the voted entry
+    ✓ renders just the winner when there is one
+    ✓ renders as a pure component
+    ✓ does update DOM when prop changes
+
+  reducer
+    ✓ handles SET_STATE
+
+
+  11 passing (158ms)
+
+#+end_example
+
+***** DONE Installation 
+Now that we have a reducer though, we can spin up a Redux Store from it. Time to add Redux to the
+project:
+#+BEGIN_SRC sh
+npm install --save redux
+#+END_SRC
+
+#+RESULTS:
+: redux@3.0.4 node_modules/redux
+
+***** DONE Initialization 
+      CLOCK: [2015-11-27 Fri 14:06]--[2015-11-27 Fri 14:11] =>  0:05
+
+The entry point index.jsx is a good place to set up the Store. Let's also kick it off with some state
+by dispatching the SET_STATE action on it (this is only temporary until we get real data in):
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore} from 'redux';
+import reducer from './reducer';
+import App from './components/App';
+import Voting from './components/Voting';
+import Results from './components/Results';
+
+const store = createStore(reducer);
+store.dispatch({
+  type: 'SET_STATE',
+  state: {
+    vote: {
+      pair: ['Sunshine', '28 Days Later'],
+      tally: {Sunshine: 2}
+    }
+  }
+});
+
+const routes = <Route component={App}>
+  <Route path="/results" component={Results} />
+  <Route path="/" component={Voting} />
+</Route>;
+
+ReactDOM.render(
+  <Router>{routes}</Router>,
+  document.getElementById('app')
+);
+
+There's our Store. Now, how do we get the data from the Store into the React components?
+
+** TEST Getting Data In from Redux to React 
+*** Introduction
+We have a Redux Store that holds our immutable application state. We have stateless React components
+that take immutable data as inputs. The two would be a great fit: If we can figure out a way to always
+get the latest data from the Store to the components, that would be perfect. React would re-render
+when the state changes, and the pure render mixin would make sure that the parts of the UI that have
+no need to re-render won't be.
+*** Init
+Rather than writing such synchronization code ourselves, we can make use of the Redux React bindings
+that are available in the react-redux package:
+#+BEGIN_SRC sh 
+npm install --save react-redux
+#+END_SRC
+
+#+RESULTS:
+| react-redux@4.0.0 | node_modules/react-redux      |                      |
+| ├──               | hoist-non-react-statics@1.0.3 |                      |
+| └──               | invariant@2.2.0               | (loose-envify@1.1.0) |
+
+
+The big idea of react-redux is to take our pure components and wire them up into a Redux Store by
+doing two things:
+
+**** Mapping the Store state into component input props. 
+**** Mapping actions into component output callback props. 
+*** react-redux provider
+    CLOCK: [2015-11-27 Fri 22:54]--[2015-11-27 Fri 23:44] =>  0:50
+    CLOCK: [2015-11-27 Fri 21:58]--[2015-11-27 Fri 22:25] =>  0:27
+    :PROPERTIES:
+    :Effort:   15
+    :END:
+**** DONE Init
+Before any of this is possible, we need to wrap our top-level application component inside a
+react-redux Provider component. This connects our component tree to a Redux store, enabling us to make
+the mappings for individual components later.
+
+We'll put in the Provider around the Router component. That'll cause the Provider to be an ancestor to
+all of our application components:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
+import reducer from './reducer';
+import App from './components/App';
+import {VotingContainer} from './components/Voting';
+import Results from './components/Results';
+
+const store = createStore(reducer);
+store.dispatch({
+  type: 'SET_STATE',
+  state: {
+    vote: {
+      pair: ['Sunshine', '28 Days Later'],
+      tally: {Sunshine: 2}
+    }
+  }
+});
+
+const routes = <Route component={App}>
+  <Route path="/results" component={Results} />
+  <Route path="/" component={VotingContainer} />
+</Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router>{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
+);
+
+});
+
+   
+
+Next, we should think about which of our components need to be "wired up" so that all the data will
+come from the Store. We have five component, which we can divide in three categories:
+
+**** DONE The root component App doesn't really need anything since it doesn't use any data. 
+**** Vote and Winner are only used by parent components that give them all the props they need. 
+They don't need wiring up either. 
+**** What's left are the components we use in routes: Voting and Results. 
+     They are currently getting data
+     in as hardcoded placeholder props from App. These are the components that need to be wired up to the
+     Store. 
+
+     Let's begin with the Voting component. With react-redux we get a function called connect that can do
+     the wiring-up of a component. It takes a mapping function as an argument and returns another function
+     that takes a React component class:
+
+     connect(mapStateToProps)(SomeComponent);
+**** TEST Connect Voting Containter to store
+     The role of the mapping function is to map the state from the Redux Store into an object of props.
+     Those props will then be merged into the props of the component that's being connected. In the case of
+     Voting, we just need to map the pair and winner from the state:
+
+src/components/Voting.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin'
+import {connect} from 'react-redux';
+import Winner from './Winner';
+import Vote from './Vote';
+
+const Voting = React.createClass({
+  mixins: [PureRenderMixin],
+  render: function() {
+    return <div>
+      {this.props.winner ?
+        <Winner ref="winner" winner={this.props.winner} /> :
+        <Vote {...this.props} />}
+    </div>;
+  }
+});
+
+function mapStateToProps(state) {
+  return {
+    pair: state.getIn(['vote', 'pair']),
+    winner: state.get('winner')
+  };
+}
+
+connect(mapStateToProps)(Voting);
+
+export default Voting;
+**** TEST Export the VotingContainer
+This isn't quite right though. True to functional style, the connect function doesn't actually go and
+mutate the Voting component. Voting remains a pure, unconnected component. Instead, connect returns a
+connected version of Voting. That means our current code isn't really doing anything. We need to grab
+that return value, which we'll call VotingContainer:
+
+src/components/Voting.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import {connect} from 'react-redux';
+import Winner from './Winner';
+import Vote from './Vote';
+
+export const Voting = React.createClass({
+  mixins: [PureRenderMixin],
+  render: function() {
+    return <div>
+      {this.props.winner ?
+        <Winner ref="winner" winner={this.props.winner} /> :
+        <Vote {...this.props} />}
+    </div>;
+  }
+});
+
+function mapStateToProps(state) {
+  return {
+    pair: state.getIn(['vote', 'pair']),
+    winner: state.get('winner')
+  };
+}
+
+export const VotingContainer = connect(mapStateToProps)(Voting);
+
+The module now exports two components: The pure component Voting and the connected component
+VotingContainer. The react-redux documentation calls the former a "dumb" component and the latter a
+"smart" component. I prefer "pure" and "connected". Call them what you will, understanding the
+difference is key:
+
+**** The pure/dumb component is fully driven by the props it is given.
+     :PROPERTIES:
+     :ORDERED:  t
+     :END:
+    It is the component equivalent of a pure function. 
+**** TODAY The connected/smart component.
+    on the other hand, wraps the pure version with some logic that will
+    keep it in sync with the changing state of the Redux Store. That logic is provided by react-redux. 
+**** TEST Update Routing table 
+We should update our routing table, so that it uses VotingContainer instead of Voting. Once we've done
+that, the voting screen will come alive with the data we've put in the Redux store:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
+import reducer from './reducer';
+import App from './components/App';
+import {VotingContainer} from './components/Voting';
+import Results from './components/Results';
+
+const store = createStore(reducer);
+store.dispatch({
+  type: 'SET_STATE',
+  state: {
+    vote: {
+      pair: ['Sunshine', '28 Days Later'],
+      tally: {Sunshine: 2}
+    }
+  }
+});
+
+const routes = <Route component={App}>
+  <Route path="/results" component={Results} />
+  <Route path="/" component={VotingContainer} />
+</Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router>{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
+);
+
+
+   
+**** DONE Unit tests
+In the unit tests for Voting we need to change the way the import is done, as we no longer have Voting
+as the default export:
+
+test/components/Voting_spec.jsx
+import React from 'react/addons';
+import {List} from 'immutable';
+import {Voting} from '../../src/components/Voting';
+import {expect} from 'chai';
+
+No other changes are needed for tests. They are written for the pure Voting component, and it isn't
+changed in any way. We've just added a wrapper for it that connects it to a Redux store.
+
+Now we should just apply the same trick for the Results screen. It also needs the pair and winner
+attributes of the state. Additionally it needs tally, in order to show the vote counts:
+#+BEGIN_SRC sh :results verbatim
+npm run test
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Results
+    ✓ renders entries with vote counts or zero (44ms)
+    ✓ invokes the next callback when next button is clicked
+    ✓ renders the winner when there is one
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+    ✓ disable buttons when user has voted
+    ✓ adds label to the voted entry
+    ✓ renders just the winner when there is one
+    ✓ renders as a pure component
+    ✓ does update DOM when prop changes
+
+  reducer
+    ✓ handles SET_STATE
+
+
+  11 passing (286ms)
+
+#+end_example
+
+**** TEST Connect Result componant 
+src/components/Results.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import {connect} from 'react-redux';
+import Winner from './Winner';
+
+export const Results = React.createClass({
+  mixins: [PureRenderMixin],
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  getVotes: function(entry) {
+    if (this.props.tally && this.props.tally.has(entry)) {
+      return this.props.tally.get(entry);
+    }
+    return 0;
+  },
+  render: function() {
+    return this.props.winner ?
+      <Winner ref="winner" winner={this.props.winner} /> :
+      <div className="results">
+        <div className="tally">
+          {this.getPair().map(entry =>
+            <div key={entry} className="entry">
+              <h1>{entry}</h1>
+              <div className="voteCount">
+                {this.getVotes(entry)}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="management">
+          <button ref="next"
+                   className="next"
+                   onClick={this.props.next}>
+            Next
+          </button>
+      </div>
+      </div>;
+  }
+});
+
+function mapStateToProps(state) {
+  return {
+    pair: state.getIn(['vote', 'pair']),
+    tally: state.getIn(['vote', 'tally']),
+    winner: state.get('winner')
+  }
+}
+
+export const ResultsContainer = connect(mapStateToProps)(Results);
+**** TEST Init ResultsContainer
+In index.jsx we should change the results route to then use ResultsContainer instead of Results:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
+import reducer from './reducer';
+import App from './components/App';
+import {VotingContainer} from './components/Voting';
+import {ResultsContainer} from './components/Results';
+
+const store = createStore(reducer);
+store.dispatch({
+  type: 'SET_STATE',
+  state: {
+    vote: {
+      pair: ['Sunshine', '28 Days Later'],
+      tally: {Sunshine: 2}
+    }
+  }
+});
+
+const routes = <Route component={App}>
+  <Route path="/results" component={ResultsContainer} />
+  <Route path="/" component={VotingContainer} />
+</Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router>{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
+);
+
+**** TEST Unit testing Result Container   
+
+Finally, in the Results test we should update the import statement to use the named export for
+Results:
+
+test/components/Results_spec.jsx
+import React from 'react/addons';
+import {List, Map} from 'immutable';
+import {Results} from '../../src/components/Results';
+import {expect} from 'chai';
+
+**** TODAY talks 
+And that's how you can connect pure React components to a Redux store, so that they get their data in
+from the store.
+
+For very small apps that just have a single root component and no routing, connecting the root
+component will be enough in most cases. The root can then just propagate the data to its children as
+props. For apps with routing, such as the one we're making, connecting each of the router's components
+is usually a good idea. But any component can be separately connected, so different strategies can be
+used for different app architectures. I think it's a good idea to use plain props whenever you can,
+because with props it is easy to see what data is going in and it is also less work since you don't
+need to manage the "wiring" code.
+**** TEST Removing Hardcoded Props
+Now that we've got the Redux data in our UI, we no longer need the hardcoded props in App.jsx, so it
+becomes even simpler than before:
+
+src/components/App.jsx
+import React from 'react';
+
+export default React.createClass({
+  render: function() {
+    return this.props.children;
+  }
+});
+
+   
+  
 ** Setting Up The Socket.io Client 
+   CLOCK: [2015-11-28 Sat 00:34]
+   :PROPERTIES:
+   :Effort:   0:12
+   :END:
+
+Now that we have a Redux app going in the client, we can talk about how we can connect it to the other
+Redux app we have running on the server. The two currently reside in their own universes, with no
+connection between them whatsoever.
+
+The server is already prepared to take incoming socket connections and emit the voting state to them.
+The client, on the other hand, has a Redux store into which we could easily dispatch incoming data.
+All we need to do is to draw the connection.
+
+This begins by getting the infrastructure in place. We need a way to make a Socket.io connection from
+the browser to the server. For that purpose we can use the socket.io-client library, which is the
+client-side equivalent to the socket.io library that we used on the server:
+
+npm install --save socket.io-client
+
+Importing this library gives us an io function that can be used to connect to a Socket.io server.
+Let's connect to one that we assume to be on the same host as our client, in port 8090 (matching the
+port we used on the server):
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
+import io from 'socket.io-client';
+import reducer from './reducer';
+import App from './components/App';
+import {VotingContainer} from './components/Voting';
+import {ResultsContainer} from './components/Results';
+
+const store = createStore(reducer);
+store.dispatch({
+  type: 'SET_STATE',
+  state: {
+    vote: {
+      pair: ['Sunshine', '28 Days Later'],
+      tally: {Sunshine: 2}
+    }
+  }
+});
+
+const socket = io(`${location.protocol}//${location.hostname}:8090`);
+
+const routes = <Route component={App}>
+  <Route path="/results" component={ResultsContainer} />
+  <Route path="/" component={VotingContainer} />
+</Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router>{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
+);
+
+
+   
+
+If you now make sure you have the server running, open the client app in a browser and inspect the
+network traffic, you should see it make a WebSocket connection and start transmitting Socket.io
+heartbeats on it.
+
+During development there will actually be two Socket.io connections on the page. One is ours and the
+other is supporting Webpack's hot reloading. 
+
 ** Receiving Actions From The Server 
+
+Given that we now have a Socket.io connection, there's actually not much we need to do to get data in
+from it. The server is sending us state events - once when we connect and then every time something
+changes. We just need to listen to those events. When we get one, we can simply dispatch a SET_STATE
+action to our Store. We already have a reducer that will handle it:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
+import io from 'socket.io-client';
+import reducer from './reducer';
+import App from './components/App';
+import {VotingContainer} from './components/Voting';
+import {ResultsContainer} from './components/Results';
+
+const store = createStore(reducer);
+
+const socket = io(`${location.protocol}//${location.hostname}:8090`);
+socket.on('state', state =>
+  store.dispatch({type: 'SET_STATE', state})
+);
+
+const routes = <Route component={App}>
+  <Route path="/results" component={ResultsContainer} />
+  <Route path="/" component={VotingContainer} />
+</Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router>{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
+);
+
+
+   
+
+Note that we've removed the hardcoded SET_STATE dispatch. We no longer need it because the server will
+give us the real state.
+
+Looking at the UI - either the voting or the results one - will now show the first pair of entries, as
+defined by the server. Our server and client are connected!
+
 ** Dispatching Actions From React Components 
+We know how to get data in from the Redux Store to the UI. Let's discuss how we can get actions out
+from the UI.
+
+The best place for us to start thinking about this is the voting buttons. When we were building the
+UI, we assumed that the Voting component will receive a vote prop whose value is a callback function.
+The component invokes that function when the user clicks on one of the buttons. But we haven't
+actually supplied the callback yet - except in unit tests.
+
+What should actually happen when a user votes on something? Well, the vote should probably be sent to
+the server, and that's something we'll discuss a bit later, but there's also client-side logic
+involved: The hasVoted prop should be set on the component, so that the user can't vote for the same
+pair again.
+
+This will be the second client-side Redux action we have, after SET_STATE. We can call it VOTE. It
+should populate a hasVoted entry in the state Map:
+
+test/reducer_spec.js
+it('handles VOTE by setting hasVoted', () => {
+  const state = fromJS({
+    vote: {
+      pair: ['Trainspotting', '28 Days Later'],
+      tally: {Trainspotting: 1}
+    }
+  });
+  const action = {type: 'VOTE', entry: 'Trainspotting'};
+  const nextState = reducer(state, action);
+
+  expect(nextState).to.equal(fromJS({
+    vote: {
+      pair: ['Trainspotting', '28 Days Later'],
+      tally: {Trainspotting: 1}
+    },
+    hasVoted: 'Trainspotting'
+  }));
+});
+
+It might also be a good idea to not set that entry if, for any reason, a VOTE action is coming in for
+an entry that's not under vote at the moment:
+
+test/reducer_spec.js
+it('does not set hasVoted for VOTE on invalid entry', () => {
+  const state = fromJS({
+    vote: {
+      pair: ['Trainspotting', '28 Days Later'],
+      tally: {Trainspotting: 1}
+    }
+  });
+  const action = {type: 'VOTE', entry: 'Sunshine'};
+  const nextState = reducer(state, action);
+
+  expect(nextState).to.equal(fromJS({
+    vote: {
+      pair: ['Trainspotting', '28 Days Later'],
+      tally: {Trainspotting: 1}
+    }
+  }));
+});
+
+Here's the reducer extension that'll do the trick:
+
+src/reducer.js
+import {Map} from 'immutable';
+
+function setState(state, newState) {
+  return state.merge(newState);
+}
+
+function vote(state, entry) {
+  const currentPair = state.getIn(['vote', 'pair']);
+  if (currentPair && currentPair.includes(entry)) {
+    return state.set('hasVoted', entry);
+  } else {
+    return state;
+  }
+}
+
+export default function(state = Map(), action) {
+  switch (action.type) {
+  case 'SET_STATE':
+    return setState(state, action.state);
+  case 'VOTE':
+    return vote(state, action.entry);
+  }
+  return state;
+}
+
+The hasVoted entry should not remain in the state forever. It should be re-set when the vote moves on
+to the next pair, so that the user can vote on that one. We should handle this in SET_STATE, where we
+can check if the pair in the new state contains the entry the user has voted on. If it doesn't, we
+should erase the hasVoted entry:
+
+test/reducer_spec.js
+it('removes hasVoted on SET_STATE if pair changes', () => {
+  const initialState = fromJS({
+    vote: {
+      pair: ['Trainspotting', '28 Days Later'],
+      tally: {Trainspotting: 1}
+    },
+    hasVoted: 'Trainspotting'
+  });
+  const action = {
+    type: 'SET_STATE',
+    state: {
+      vote: {
+        pair: ['Sunshine', 'Slumdog Millionaire']
+      }
+    }
+  };
+  const nextState = reducer(initialState, action);
+
+  expect(nextState).to.equal(fromJS({
+    vote: {
+      pair: ['Sunshine', 'Slumdog Millionaire']
+    }
+  }));
+});
+
+We can implement this by composing another function, called resetVote on the SET_STATE action handler:
+
+src/reducer.js
+import {List, Map} from 'immutable';
+
+function setState(state, newState) {
+  return state.merge(newState);
+}
+
+function vote(state, entry) {
+  const currentPair = state.getIn(['vote', 'pair']);
+  if (currentPair && currentPair.includes(entry)) {
+    return state.set('hasVoted', entry);
+  } else {
+    return state;
+  }
+}
+
+function resetVote(state) {
+  const hasVoted = state.get('hasVoted');
+  const currentPair = state.getIn(['vote', 'pair'], List());
+  if (hasVoted && !currentPair.includes(hasVoted)) {
+    return state.remove('hasVoted');
+  } else {
+    return state;
+  }
+}
+
+export default function(state = Map(), action) {
+  switch (action.type) {
+  case 'SET_STATE':
+    return resetVote(setState(state, action.state));
+  case 'VOTE':
+    return vote(state, action.entry);
+  }
+  return state;
+}
+
+This logic for determining whether the hasVoted entry is for the current pair is slightly problematic.
+See the exercises for a way to improve it. 
+
+We aren't yet connecting the hasVoted entry to the props on Voting, so we should do that too:
+
+src/components/Voting.jsx
+function mapStateToProps(state) {
+  return {
+    pair: state.getIn(['vote', 'pair']),
+    hasVoted: state.get('hasVoted'),
+    winner: state.get('winner')
+  };
+}
+
+Now we still need a way to give a vote callback to Voting, which will cause this new action to be
+dispatched. We should keep Voting itself pure and unaware of actions or Redux. Instead, this is
+another job for the connect function from react-redux.
+
+In addition to wiring up input props, react-redux can be used to wire up output actions. Before we can
+do that though, we need to introduce another core Redux concept: Action creators.
+
+As we have seen, Redux actions are just simple objects that (by convention) have a type attribute and
+other, action-specific data. We have been creating these actions whenever needed by simply using
+object literals. It is preferable, however, to use little factory functions for making actions
+instead. Functions such as this one:
+
+function vote(entry) {
+  return {type: 'VOTE', entry};
+}
+
+These functions are called action creators. There's really not much to them - they are pure functions
+that just return action objects - but what they do is encapsulate the internal structure of the action
+objects so that the rest of your codebase doesn't need to be concerned with that. Actions creators
+also conveniently document all the actions that can be dispatched in a given application. That
+information would be more difficult to gather if it was sprinkled all over the codebase in object
+literals.
+
+Let's create a new file that defines the action creators for our two existing client-side actions:
+
+src/action_creators.js
+export function setState(state) {
+  return {
+    type: 'SET_STATE',
+    state
+  };
+}
+
+export function vote(entry) {
+  return {
+    type: 'VOTE',
+    entry
+  };
+}
+
+We could also very easily write unit tests for these functions, but I usually don't bother with that
+unless an action creator actually does something more than just returns an object. Feel free to add
+the unit tests, however, if you consider them useful! 
+
+In index.jsx we can now use the setState action creator in the Socket.io event handler:
+
+src/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
+import io from 'socket.io-client';
+import reducer from './reducer';
+import {setState} from './action_creators';
+import App from './components/App';
+import {VotingContainer} from './components/Voting';
+import {ResultsContainer} from './components/Results';
+
+const store = createStore(reducer);
+
+const socket = io(`${location.protocol}//${location.hostname}:8090`);
+socket.on('state', state =>
+  store.dispatch(setState(state))
+);
+
+const routes = <Route component={App}>
+  <Route path="/results" component={ResultsContainer} />
+  <Route path="/" component={VotingContainer} />
+</Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router>{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
+);
+
+
+   
+
+A really neat thing about action creators is the way react-redux can connect them to React components:
+We have a vote callback prop on Voting, and a vote action creator. Both have the same name and the
+same function signature: A single argument, which is the entry being voted. What we can do is simply
+give our action creators to the react-redux connect function as the second argument, and the
+connection will be made:
+
+src/components/Voting.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import {connect} from 'react-redux';
+import Winner from './Winner';
+import Vote from './Vote';
+import * as actionCreators from '../action_creators';
+
+export const Voting = React.createClass({
+  mixins: [PureRenderMixin],
+  render: function() {
+    return <div>
+      {this.props.winner ?
+        <Winner ref="winner" winner={this.props.winner} /> :
+        <Vote {...this.props} />}
+    </div>;
+  }
+});
+
+function mapStateToProps(state) {
+  return {
+    pair: state.getIn(['vote', 'pair']),
+    hasVoted: state.get('hasVoted'),
+    winner: state.get('winner')
+  };
+}
+
+export const VotingContainer = connect(
+  mapStateToProps,
+  actionCreators
+)(Voting);
+
+The effect of this is that a vote prop will be given to Voting. That prop is a function that creates
+an action using the vote action creator, and also dispatches that action to the Redux Store. Thus,
+clicking a vote button now dispatches an action! You should be able to see the effects in the browser
+immediately: When you vote on something, the buttons will become disabled.
+
 ** Sending Actions To The Server Using Redux Middleware 
+The final aspect of our application that we need to address is getting the results of the user's
+actions to the server. This should happen when the user votes on something, as well as when the vote
+manager hits the Next button on the result screen.
+
+Let's begin by discussing Voting. Here's an inventory of what we already have in place:
+
+*** A VOTE action is created and dispatched to the client-side Redux Store when the user votes. 
+*** VOTE actions are handled by the client-side reducer by setting the hasVoted state. 
+*** The server is ready to receive actions from clients via the action Socket.io event. It dispatches
+  all received actions to the serverside Redux Store. 
+*** VOTE actions are handled by the serverside reducer by registering the vote and updating the tally. 
+
+It would seem like we actually have almost everything we need! All that is missing is the actual
+sending of the client-side VOTE action to the server, so that it would be dispatched to both of the
+Redux stores. That's what we'll do next.
+
+How should we approach this? There's nothing built into Redux for this purpose, since supporting a
+distributed system like ours isn't really part of its core functionality. It is left to us to decide
+where and how we send client-side actions to the server.
+
+What Redux does provide is a generic way to tap into actions that are being dispatched to Redux
+stores: Middleware.
+
+A Redux middleware is a function that gets invoked when an action is dispatched, before the action
+hits the reducer and the store itself. Middleware can be used for all kinds of things, from logging
+and exception handling to modifying actions, caching results, or even changing how or when the action
+will reach the store. What we are going to use them for is sending client-side actions to the server.
+
+Note the difference between Redux middleware and Redux listeners: Middleware are called before an
+action hits the store, and they may affect what happens to the action. Listeners are called after an
+action has been dispatched, and they can't really do anything about it. Different tools for different
+purposes. 
+
+What we're going to do is create a "remote action middleware" that causes an action to be dispatched
+not only to the original store, but also to a remote store using a Socket.io connection.
+
+Let's set up the skeleton for this middleware. It is a function that takes a Redux store, and returns
+another function that takes a "next" callback. That function returns a third function that takes a
+Redux action. The innermost function is where the middleware implementation will actually go:
+
+src/remote_action_middleware.js
+export default store => next => action => {
+
+}
+
+The code above may look a bit foreign but it's really just a more concise way of expressing this:
+
+export default function(store) {
+  return function(next) {
+    return function(action) {
+
+    }
+  }
+}
+
+This style of nesting single-argument functions is called currying. In this case it's used so that the
+Middleware is easily configurable: If we had all the arguments in just one function (function(store,
+next, action) { }) we'd also have to supply all the arguments every time the middleware is used. With
+the curried version we can call the outermost function once, and get a return value that "remembers"
+which store to use. The same goes for the next argument.
+
+The next argument is a callback that the middleware should call when it has done its work and the
+action should be sent to the store (or the next middleware):
+
+src/remote_action_middleware.js
+export default store => next => action => {
+  return next(action);
+}
+
+The middleware could also decide not to call next, if it decided that the action should be halted. In
+that case it would never go into the reducer or the store. 
+
+Let's just log something in this middleware so that we'll be able to see when it's called:
+
+src/remote_action_middleware.js
+export default store => next => action => {
+  console.log('in middleware', action);
+  return next(action);
+}
+
+If we now plug in this middleware to our Redux store, we should see all actions being logged. The
+middleware can be activated using an applyMiddleware function that Redux ships with. It takes the
+middleware we want to register, and returns a function that takes the createStore function. That
+second function will then create a store for us that has the middleware included in it:
+
+src/components/index.jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Router, {Route} from 'react-router';
+import {createStore, applyMiddleware} from 'redux';
+import {Provider} from 'react-redux';
+import io from 'socket.io-client';
+import reducer from './reducer';
+import {setState} from './action_creators';
+import remoteActionMiddleware from './remote_action_middleware';
+import App from './components/App';
+import {VotingContainer} from './components/Voting';
+import {ResultsContainer} from './components/Results';
+
+const createStoreWithMiddleware = applyMiddleware(
+  remoteActionMiddleware
+)(createStore);
+const store = createStoreWithMiddleware(reducer);
+
+const socket = io(`${location.protocol}//${location.hostname}:8090`);
+socket.on('state', state =>
+  store.dispatch(setState(state))
+);
+
+const routes = <Route component={App}>
+  <Route path="/results" component={ResultsContainer} />
+  <Route path="/" component={VotingContainer} />
+</Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router>{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
+);
+
+This is another instance of the curried style of configuring things that we just discussed. Redux APIs
+use it quite heavily. 
+
+
+   
+
+If you now reload the app, you'll see the middleware logging the actions that occur: Once for the
+initial SET_STATE, and again for the VOTE action from voting.
+
+What this middleware should actually do is send a given action to a Socket.io connection, in addition
+to giving it to the next middleware. Before it can do that, it needs the connection to send it to. We
+already have a connection in index.jsx - we just need the middleware to have access to it too. That's
+easily accomplished by using currying once more in the middleware definition. The outermost function
+should take a Socket.io socket:
+
+src/remote_action_middleware.js
+export default socket => store => next => action => {
+  console.log('in middleware', action);
+  return next(action);
+}
+
+Now we can pass in the socket from index.jsx:
+
+src/index.jsx
+const socket = io(`${location.protocol}//${location.hostname}:8090`);
+socket.on('state', state =>
+  store.dispatch(setState(state))
+);
+
+const createStoreWithMiddleware = applyMiddleware(
+  remoteActionMiddleware(socket)
+)(createStore);
+const store = createStoreWithMiddleware(reducer);
+
+Note that we need to flip around the initialization of the socket and the store, so that the socket is
+created first. We need it during store initialization.
+
+All that remains to be done now is to actually emit an action event from the middleware:
+
+src/remote_action_middleware.js
+export default socket => store => next => action => {
+  socket.emit('action', action);
+  return next(action);
+}
+
+And that's it! If you now click on one of the voting buttons, you'll also see the tally numbers
+update, both within the same browser window and any other ones that you run the app in. The vote is
+being registered!
+
+There is one major problem we have with this though: When we get the state update from the server and
+dispatch the SET_STATE action, it also goes right back to the server. Although the server does nothing
+with that action, its listener is still triggered, causing a new SET_STATE. We have created an
+infinite loop! That's certainly not good.
+
+It is not appropriate for the remote action middleware to send each and every action to the server.
+Some actions, such as SET_STATE, should just be handled locally in the client. We can extend the
+middleware to only send certain actions to the server. Concretely, we should only send out actions
+that have a {meta: {remote: true}} property attached:
+
+This pattern is adapted from the rafScheduler example in the middleware documentation. 
+
+src/remote_action_middleware.js
+export default socket => store => next => action => {
+  if (action.meta && action.meta.remote) {
+    socket.emit('action', action);
+  }
+  return next(action);
+}
+
+The action creator for VOTE should now set this property, where as the one for SET_STATE should not:
+
+src/action_creators.js
+export function setState(state) {
+  return {
+    type: 'SET_STATE',
+    state
+  };
+}
+
+export function vote(entry) {
+  return {
+    meta: {remote: true},
+    type: 'VOTE',
+    entry
+  };
+}
+
+Let's recap what's actually happening here:
+
+1 The user clicks a vote button. A VOTE action is dispatched. 
+2 The remote action middleware sends the action over the Socket.io connection. 
+3 The client-side Redux store handles the action, causing the local hasVote state to be set. 
+4 When the message arrives on the server, the serverside Redux store handles the action, updating the
+  vote in the tally. 
+5 The listener on the serverside Redux store broadcasts a state snapshot to all connected clients. 
+6 A SET_STATE action is dispatched to the Redux store of every connected client. 
+7 The Redux store of every connected client handles the SET_STATE action with the updated state from
+  the server. 
+
+To complete our application, we just need to make the Next button work as well. Just like with voting,
+the server has the appropriate logic already. We just need to connect things up.
+
+The action creator for NEXT needs to create a remote action of the correct type:
+
+src/action_creator.js
+export function setState(state) {
+  return {
+    type: 'SET_STATE',
+    state
+  };
+}
+
+export function vote(entry) {
+  return {
+    meta: {remote: true},
+    type: 'VOTE',
+    entry
+  };
+}
+
+export function next() {
+  return {
+    meta: {remote: true},
+    type: 'NEXT'
+  };
+}
+
+The ResultsContainer component should connect the action creators in as props:
+
+src/components/Results.jsx
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import {connect} from 'react-redux';
+import Winner from './Winner';
+import * as actionCreators from '../action_creators';
+
+export const Results = React.createClass({
+  mixins: [PureRenderMixin],
+  getPair: function() {
+    return this.props.pair || [];
+  },
+  getVotes: function(entry) {
+    if (this.props.tally && this.props.tally.has(entry)) {
+      return this.props.tally.get(entry);
+    }
+    return 0;
+  },
+  render: function() {
+    return this.props.winner ?
+      <Winner ref="winner" winner={this.props.winner} /> :
+      <div className="results">
+        <div className="tally">
+          {this.getPair().map(entry =>
+            <div key={entry} className="entry">
+              <h1>{entry}</h1>
+              <div className="voteCount">
+                {this.getVotes(entry)}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="management">
+          <button ref="next"
+                   className="next"
+                   onClick={this.props.next}>
+            Next
+          </button>
+        </div>
+      </div>;
+  }
+});
+
+function mapStateToProps(state) {
+  return {
+    pair: state.getIn(['vote', 'pair']),
+    tally: state.getIn(['vote', 'tally']),
+    winner: state.get('winner')
+  }
+}
+
+export const ResultsContainer = connect(
+  mapStateToProps,
+  actionCreators
+)(Results);
+
+And... that's it! We now have a complete, functioning application. Try opening the results screen on
+your computer and the voting screen on a mobile device. You'll see the actions applied on one device
+immediately taking effect on another - which always feel magical: Vote on one screen, see the results
+view update on another screen. Click "Next" on the results screen and see the vote proceed on your
+voting device. To make it even more fun, arrange a vote with some friends the next time you get
+together!
 
 * Exercises 
 
@@ -2784,24 +4887,4 @@ and the fact that it uses smaller components internally is an implementation det
 ** Broadcasting State from A Redux Listener 
 ** Receiving Remote Redux Actions 
 
-* The Client Application 
-** Client Project Setup 
-*** Unit Testing support 
-** React and react-hot-loader 
-** Writing The UI for The Voting Screen 
-** Immutable Data And Pure Rendering 
-** Writing The UI for The Results Screen And Handling Routing 
-** Introducing A Client-Side Redux Store 
-** Getting Data In from Redux to React 
-** Setting Up The Socket.io Client 
-** Receiving Actions From The Server 
-** Dispatching Actions From React Components 
-** Sending Actions To The Server Using Redux Middleware 
-* Exercises 
-** 1. Invalid Vote Prevention 
-** 2. Improved Vote State Reset 
-** 3. Duplicate Vote Prevention 
-** 4. Restarting The Vote 
-** 5. Indicating Socket Connection State 
-** Bonus Challenge: Going Peer to Peer 
  
