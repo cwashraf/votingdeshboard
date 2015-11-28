@@ -3410,7 +3410,7 @@ UI.
 Now that we do have the UI though, let's talk about how to make it come alive by connecting its inputs
 and outputs to a Redux store.
 
-** TEST Introducing A Client-Side Redux Store 
+** DONE Introducing A Client-Side Redux Store 
    CLOCK: [2015-11-27 Fri 12:58]--[2015-11-27 Fri 13:35] =>  0:37
 *** DONE Introduction
 Redux is really designed to be used as the state container for UI applications, exactly like the one
@@ -3753,7 +3753,7 @@ ReactDOM.render(
 
 There's our Store. Now, how do we get the data from the Store into the React components?
 
-** TEST Getting Data In from Redux to React 
+** DONE Getting Data In from Redux to React 
 *** Introduction
 We have a Redux Store that holds our immutable application state. We have stateless React components
 that take immutable data as inputs. The two would be a great fit: If we can figure out a way to always
@@ -4140,8 +4140,8 @@ export default React.createClass({
 
    
   
-** Setting Up The Socket.io Client 
-   CLOCK: [2015-11-28 Sat 00:34]
+** DONE Setting Up The Socket.io Client 
+   CLOCK: [2015-11-28 Sat 00:34]--[2015-11-28 Sat 00:53] =>  0:19
    :PROPERTIES:
    :Effort:   0:12
    :END:
@@ -4157,8 +4157,42 @@ All we need to do is to draw the connection.
 This begins by getting the infrastructure in place. We need a way to make a Socket.io connection from
 the browser to the server. For that purpose we can use the socket.io-client library, which is the
 client-side equivalent to the socket.io library that we used on the server:
-
+#+BEGIN_SRC sh
 npm install --save socket.io-client
+#+END_SRC
+
+#+RESULTS:
+|                        |                                                |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| >                      | bufferutil@1.2.1                               | install                   | /usr/local/src/jstutorials/voting-client/node_modules/socket.io-client/node_modules/engine.io-client/node_modules/ws/node_modules/bufferutil             |              |                  |                |                 |                         |                 |           |
+| >                      | node-gyp                                       | rebuild                   |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+|                        |                                                |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| make:                  | Entering                                       | directory                 | '/usr/local/src/jstutorials/voting-client/node_modules/socket.io-client/node_modules/engine.io-client/node_modules/ws/node_modules/bufferutil/build'     |              |                  |                |                 |                         |                 |           |
+| CXX(target)            | Release/obj.target/bufferutil/src/bufferutil.o |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| SOLINK_MODULE(target)  | Release/obj.target/bufferutil.node             |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| COPY                   | Release/bufferutil.node                        |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| make:                  | Leaving                                        | directory                 | '/usr/local/src/jstutorials/voting-client/node_modules/socket.io-client/node_modules/engine.io-client/node_modules/ws/node_modules/bufferutil/build'     |              |                  |                |                 |                         |                 |           |
+|                        |                                                |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| >                      | utf-8-validate@1.2.1                           | install                   | /usr/local/src/jstutorials/voting-client/node_modules/socket.io-client/node_modules/engine.io-client/node_modules/ws/node_modules/utf-8-validate         |              |                  |                |                 |                         |                 |           |
+| >                      | node-gyp                                       | rebuild                   |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+|                        |                                                |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| make:                  | Entering                                       | directory                 | '/usr/local/src/jstutorials/voting-client/node_modules/socket.io-client/node_modules/engine.io-client/node_modules/ws/node_modules/utf-8-validate/build' |              |                  |                |                 |                         |                 |           |
+| CXX(target)            | Release/obj.target/validation/src/validation.o |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| SOLINK_MODULE(target)  | Release/obj.target/validation.node             |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| COPY                   | Release/validation.node                        |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| make:                  | Leaving                                        | directory                 | '/usr/local/src/jstutorials/voting-client/node_modules/socket.io-client/node_modules/engine.io-client/node_modules/ws/node_modules/utf-8-validate/build' |              |                  |                |                 |                         |                 |           |
+| socket.io-client@1.3.7 | node_modules/socket.io-client                  |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | to-array@0.1.3                                 |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | indexof@0.0.1                                  |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | component-bind@1.0.0                           |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | debug@0.7.4                                    |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | backo2@1.0.2                                   |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | object-component@0.0.3                         |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | component-emitter@1.1.2                        |                           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | has-binary@0.1.6                               | (isarray@0.0.1)           |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | parseuri@0.0.2                                 | (better-assert@1.0.2)     |                                                                                                                                                          |              |                  |                |                 |                         |                 |           |
+| ├──                    | socket.io-parser@2.2.4                         | (isarray@0.0.1,           | benchmark@1.0.0,                                                                                                                                         | json3@3.2.6) |                  |                |                 |                         |                 |           |
+| └──                    | engine.io-client@1.5.4                         | (component-inherit@0.0.3, | xmlhttprequest@1.5.0,                                                                                                                                    | debug@1.0.4, | parsejson@0.0.1, | parseqs@0.0.2, | parseuri@0.0.4, | engine.io-parser@1.2.2, | has-cors@1.0.3, | ws@0.8.0) |
+
 
 Importing this library gives us an io function that can be used to connect to a Socket.io server.
 Let's connect to one that we assume to be on the same host as our client, in port 8090 (matching the
@@ -4211,7 +4245,7 @@ heartbeats on it.
 During development there will actually be two Socket.io connections on the page. One is ours and the
 other is supporting Webpack's hot reloading. 
 
-** Receiving Actions From The Server 
+** DONE Receiving Actions From The Server 
 
 Given that we now have a Socket.io connection, there's actually not much we need to do to get data in
 from it. The server is sending us state events - once when we connect and then every time something
