@@ -4292,10 +4292,18 @@ give us the real state.
 Looking at the UI - either the voting or the results one - will now show the first pair of entries, as
 defined by the server. Our server and client are connected!
 
-** Dispatching Actions From React Components 
+** TODAY Dispatching Actions From React Components 
+   CLOCK: [2015-11-28 Sat 03:50]--[2015-11-28 Sat 04:11] =>  0:21
+   CLOCK: [2015-11-28 Sat 03:04]--[2015-11-28 Sat 03:24] =>  0:20
+   CLOCK: [2015-11-28 Sat 01:46]--[2015-11-28 Sat 02:33] =>  0:47
+   :PROPERTIES:
+   :Effort:   22
+   :END:
+*** Introduction
 We know how to get data in from the Redux Store to the UI. Let's discuss how we can get actions out
 from the UI.
-
+*** TODAY Dispatching voting buttons 
+**** INTRODUCTION
 The best place for us to start thinking about this is the voting buttons. When we were building the
 UI, we assumed that the Voting component will receive a vote prop whose value is a callback function.
 The component invokes that function when the user clicks on one of the buttons. But we haven't
@@ -4305,7 +4313,8 @@ What should actually happen when a user votes on something? Well, the vote shoul
 the server, and that's something we'll discuss a bit later, but there's also client-side logic
 involved: The hasVoted prop should be set on the component, so that the user can't vote for the same
 pair again.
-
+**** DONE Prepare Unit test for hasVoted
+***** TEST U1
 This will be the second client-side Redux action we have, after SET_STATE. We can call it VOTE. It
 should populate a hasVoted entry in the state Map:
 
@@ -4329,6 +4338,7 @@ it('handles VOTE by setting hasVoted', () => {
   }));
 });
 
+***** TEST U2
 It might also be a good idea to not set that entry if, for any reason, a VOTE action is coming in for
 an entry that's not under vote at the moment:
 
@@ -4350,7 +4360,7 @@ it('does not set hasVoted for VOTE on invalid entry', () => {
     }
   }));
 });
-
+**** DONE Code in reducer
 Here's the reducer extension that'll do the trick:
 
 src/reducer.js
@@ -4378,7 +4388,7 @@ export default function(state = Map(), action) {
   }
   return state;
 }
-
+**** DONE Re-set HASVOTED
 The hasVoted entry should not remain in the state forever. It should be re-set when the vote moves on
 to the next pair, so that the user can vote on that one. We should handle this in SET_STATE, where we
 can check if the pair in the new state contains the entry the user has voted on. If it doesn't, we
@@ -4451,7 +4461,7 @@ export default function(state = Map(), action) {
 This logic for determining whether the hasVoted entry is for the current pair is slightly problematic.
 See the exercises for a way to improve it. 
 
-We aren't yet connecting the hasVoted entry to the props on Voting, so we should do that too:
+**** DONE Connecting the hasVoted entry to the props on Voting
 
 src/components/Voting.jsx
 function mapStateToProps(state) {
@@ -4465,6 +4475,51 @@ function mapStateToProps(state) {
 Now we still need a way to give a vote callback to Voting, which will cause this new action to be
 dispatched. We should keep Voting itself pure and unaware of actions or Redux. Instead, this is
 another job for the connect function from react-redux.
+**** DONE Test Results 
+#+BEGIN_SRC sh :results verbatim
+npm run test 
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+> voting-client@1.0.0 test /usr/local/src/jstutorials/voting-client
+> mocha --compilers js:babel-core/register --require ./test/test_helper.js 'test/**/*.@(js|jsx)'
+
+
+
+  Results
+    ✓ renders entries with vote counts or zero (40ms)
+    ✓ invokes the next callback when next button is clicked
+    ✓ renders the winner when there is one
+
+  Voting
+    ✓ renders a poir of buttons
+    ✓ invokes callback when a button is clicked
+    ✓ disable buttons when user has voted
+    ✓ adds label to the voted entry
+    ✓ renders just the winner when there is one
+    ✓ renders as a pure component
+    ✓ does update DOM when prop changes
+
+  reducer
+    ✓ handles SET_STATE
+    ✓ handles SET_STATE with plain JS payload
+    ✓ handles SET_STATE without initial state
+    ✓ handles VOTE by setting hasVoted
+    ✓ does not set hasVoted for VOTE on invalid entry
+    ✓ removes hasVoted on SET_STATE if pair changes
+
+
+  16 passing (187ms)
+
+#+end_example
+
+*** DONE Action Createtor
+    CLOCK: [2015-11-28 Sat 21:58]--[2015-11-28 Sat 22:09] =>  0:11
+    :PROPERTIES:
+    :Effort:   0:05
+    :END:
 
 In addition to wiring up input props, react-redux can be used to wire up output actions. Before we can
 do that though, we need to introduce another core Redux concept: Action creators.
@@ -4478,6 +4533,7 @@ function vote(entry) {
   return {type: 'VOTE', entry};
 }
 
+**** DONE Action Creators
 These functions are called action creators. There's really not much to them - they are pure functions
 that just return action objects - but what they do is encapsulate the internal structure of the action
 objects so that the rest of your codebase doesn't need to be concerned with that. Actions creators
@@ -4505,7 +4561,7 @@ export function vote(entry) {
 We could also very easily write unit tests for these functions, but I usually don't bother with that
 unless an action creator actually does something more than just returns an object. Feel free to add
 the unit tests, however, if you consider them useful! 
-
+**** DONE Applying 
 In index.jsx we can now use the setState action creator in the Socket.io event handler:
 
 src/index.jsx
@@ -4540,9 +4596,7 @@ ReactDOM.render(
   document.getElementById('app')
 );
 
-
-   
-
+**** DONE Action Creator in action 
 A really neat thing about action creators is the way react-redux can connect them to React components:
 We have a vote callback prop on Voting, and a vote action creator. Both have the same name and the
 same function signature: A single argument, which is the entry being voted. What we can do is simply
@@ -4586,7 +4640,13 @@ an action using the vote action creator, and also dispatches that action to the 
 clicking a vote button now dispatches an action! You should be able to see the effects in the browser
 immediately: When you vote on something, the buttons will become disabled.
 
-** Sending Actions To The Server Using Redux Middleware 
+** TODAY Sending Actions To The Server Using Redux Middleware 
+   CLOCK: [2015-11-28 Sat 23:08]--[2015-11-28 Sat 23:16] =>  0:08
+   CLOCK: [2015-11-28 Sat 22:14]--[2015-11-28 Sat 22:42] =>  0:28
+   :PROPERTIES:
+   :Effort:   0:30
+   :END:
+
 The final aspect of our application that we need to address is getting the results of the user's
 actions to the server. This should happen when the user votes on something, as well as when the vote
 manager hits the Next button on the result screen.
@@ -4609,7 +4669,8 @@ where and how we send client-side actions to the server.
 
 What Redux does provide is a generic way to tap into actions that are being dispatched to Redux
 stores: Middleware.
-
+*** Middleware 
+**** Defination
 A Redux middleware is a function that gets invoked when an action is dispatched, before the action
 hits the reducer and the store itself. Middleware can be used for all kinds of things, from logging
 and exception handling to modifying actions, caching results, or even changing how or when the action
@@ -4619,7 +4680,7 @@ Note the difference between Redux middleware and Redux listeners: Middleware are
 action hits the store, and they may affect what happens to the action. Listeners are called after an
 action has been dispatched, and they can't really do anything about it. Different tools for different
 purposes. 
-
+***** TEST outbound socket io Middleware 
 What we're going to do is create a "remote action middleware" that causes an action to be dispatched
 not only to the original store, but also to a remote store using a Socket.io connection.
 
@@ -4659,6 +4720,7 @@ export default store => next => action => {
 The middleware could also decide not to call next, if it decided that the action should be halted. In
 that case it would never go into the reducer or the store. 
 
+**** TEST Applly log in middleware
 Let's just log something in this middleware so that we'll be able to see when it's called:
 
 src/remote_action_middleware.js
@@ -4713,7 +4775,7 @@ use it quite heavily.
 
 
    
-
+**** TEST Passing socket io to middleware
 If you now reload the app, you'll see the middleware logging the actions that occur: Once for the
 initial SET_STATE, and again for the VOTE action from voting.
 
@@ -4756,7 +4818,7 @@ export default socket => store => next => action => {
 And that's it! If you now click on one of the voting buttons, you'll also see the tally numbers
 update, both within the same browser window and any other ones that you run the app in. The vote is
 being registered!
-
+**** TEST Optimizaion 
 There is one major problem we have with this though: When we get the state update from the server and
 dispatch the SET_STATE action, it also goes right back to the server. Although the server does nothing
 with that action, its listener is still triggered, causing a new SET_STATE. We have created an
@@ -4809,7 +4871,7 @@ Let's recap what's actually happening here:
 
 To complete our application, we just need to make the Next button work as well. Just like with voting,
 the server has the appropriate logic already. We just need to connect things up.
-
+**** TEST action creator for NEXT 
 The action creator for NEXT needs to create a remote action of the correct type:
 
 src/action_creator.js
@@ -4901,7 +4963,6 @@ voting device. To make it even more fun, arrange a vote with some friends the ne
 together!
 
 * Exercises 
-
 ** 1. Invalid Vote Prevention 
 ** 2. Improved Vote State Reset 
 ** 3. Duplicate Vote Prevention 
