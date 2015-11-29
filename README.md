@@ -265,9 +265,6 @@ for the JavaScript code in this tag.
 </tbody>
 </table>
 </div>
-<div id="outline-container-sec-1-1" class="outline-3">
-<h3 id="sec-1-1"><span class="section-number-3">1.1</span> <a href="http://teropa.info/blog/2015/09/10/full-stack-redux-tutorial.html">http://teropa.info/blog/2015/09/10/full-stack-redux-tutorial.html</a></h3>
-</div>
 <div id="outline-container-sec-1-2" class="outline-3">
 <h3 id="sec-1-2"><span class="section-number-3">1.2</span> Install following packages</h3>
 <div class="outline-text-3" id="text-1-2">
